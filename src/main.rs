@@ -6,7 +6,9 @@ use std::io;
 use std::str::FromStr;
 use std::sync::mpsc::channel;
 use jack::prelude::{Client, AsyncClient, client_options};
-
+use moomoot::synth::noise::WhiteNoise;
+use moomoot::synth::string::KarplusStrong;
+use moomoot::synth::sine::Sine;
 
 
 /// Attempt to read a frequency from standard in. Will block until there is user input. `None` is
@@ -20,18 +22,6 @@ fn read_freq() -> Option<f64> {
     }
 }
 
-struct Sine {
-    time: f64,
-    freq: f64,
-}
-
-impl moomoot::Synth for Sine {
-    fn sample(&mut self, frame_t: f64) -> f64 {
-        let x = self.freq * self.time * 2.0 * std::f64::consts::PI;
-        self.time += frame_t;
-        x.sin()
-    }
-}
 
 
 
@@ -39,6 +29,7 @@ fn main() {
     // 1. open a client
     let (client, _status) = Client::new("rust_jack_sine", client_options::NO_START_SERVER).unwrap();
 
+    let sample_rate = client.sample_rate();
     let (tx, rx) = channel();
 
 
@@ -46,9 +37,33 @@ fn main() {
     {
         let mut lpr = moomoot::Looper::new();
 
-        lpr.add_step(Box::new(Sine{time: 0., freq: 220.}), 0.5);
-        lpr.add_step(Box::new(Sine{time: 0., freq: 440.}), 0.2);
-        lpr.add_step(Box::new(Sine{time: 0., freq: 300.}), 0.3);
+        let cutoff_freq = 2000;
+        lpr.add_step(Box::new(KarplusStrong::new(300.,
+                1./sample_rate as f64,
+                cutoff_freq as f64,
+                0.9)), 0.2);
+
+        lpr.add_step(Box::new(Sine::new(440.)) , 0.3);
+
+        lpr.add_step(Box::new(KarplusStrong::new(300.,
+                1./sample_rate as f64,
+                cutoff_freq as f64,
+                0.9)), 0.2);
+
+        lpr.add_step(Box::new(Sine::new(880.)) , 0.3);
+
+
+        lpr.add_step(Box::new(KarplusStrong::new(300.,
+                1./sample_rate as f64,
+                cutoff_freq as f64,
+                0.9)), 0.2);
+
+        lpr.add_step(Box::new(Sine::new(110.)) , 0.3);
+
+
+        //lpr.add_step(Box::new(Sine{time: 0., freq: 220.}), 5.);
+        //lpr.add_step(Box::new(Sine{time: 0., freq: 440.}), 10.);
+
         process = moomoot::MooMoot::new(&client, lpr);
     }
 

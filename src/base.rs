@@ -3,6 +3,7 @@ use self::jack::prelude::{AudioOutPort, AudioOutSpec, Client, JackControl, Proce
                     ProcessScope, Port};
 
 pub trait Synth {
+    fn reset(&mut self);
     fn sample(&mut self, frame_t: f64) -> f64;
 }
 

@@ -9,7 +9,15 @@ struct LoopStep {
 }
 
 impl LoopStep {
+
+    fn reset(&mut self) {
+        self.synth.reset();
+        self.next.as_mut().map(|step| step.reset());
+
+    }
+
     fn sample(&mut self, relative_time: f64, frame_t: f64) -> Option<f64> {
+
         if(relative_time < self.duration) {
             return Some(self.synth.sample(frame_t));
         }
@@ -48,6 +56,11 @@ impl Looper {
 
 impl Synth for Looper {
 
+    fn reset(&mut self) {
+        self.time = 0.;
+        self.head.as_mut().map(|s| s.reset());
+    }
+
     fn sample(&mut self, frame_t: f64) -> f64 {
         self.time += frame_t;
         let time = self.time;
@@ -57,7 +70,7 @@ impl Synth for Looper {
         match r {
             Some(sample) => return sample,
             None => {
-                self.time = 0.;
+                self.reset();
                 return self.head.as_mut().and_then(|s| s.sample(0., frame_t)).unwrap();
             }
         }
