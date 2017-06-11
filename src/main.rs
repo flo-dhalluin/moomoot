@@ -29,47 +29,20 @@ fn main() {
     // 1. open a client
     let (client, _status) = Client::new("rust_jack_sine", client_options::NO_START_SERVER).unwrap();
 
-    let sample_rate = client.sample_rate();
+    let sample_rate = client.sample_rate() as f64;
     let (tx, rx) = channel();
 
 
-    let process;
-    {
-        let mut lpr = moomoot::Looper::new();
+    let mut process = moomoot::MooMoot::new(&client);
 
-        let cutoff_freq = 2000;
-        lpr.add_step(Box::new(KarplusStrong::new(300.,
-                1./sample_rate as f64,
-                cutoff_freq as f64,
-                0.9)), 0.2);
-
-        lpr.add_step(Box::new(Sine::new(440.)) , 0.3);
-
-        lpr.add_step(Box::new(KarplusStrong::new(300.,
-                1./sample_rate as f64,
-                cutoff_freq as f64,
-                0.9)), 0.2);
-
-        lpr.add_step(Box::new(Sine::new(880.)) , 0.3);
-
-
-        lpr.add_step(Box::new(KarplusStrong::new(300.,
-                1./sample_rate as f64,
-                cutoff_freq as f64,
-                0.9)), 0.2);
-
-        lpr.add_step(Box::new(Sine::new(110.)) , 0.3);
-
-
-        //lpr.add_step(Box::new(Sine{time: 0., freq: 220.}), 5.);
-        //lpr.add_step(Box::new(Sine{time: 0., freq: 440.}), 10.);
-
-        process = moomoot::MooMoot::new(&client, lpr);
-    }
+    // processing starts here
+    process.add_synth(Box::new(Sine::new(sample_rate, 440.)));
+    process.add_synth(Box::new(Sine::new(sample_rate, 220.)));
+    process.add_synth(Box::new(Sine::new(sample_rate, 50.)));
 
     // 4. activate the client
     let active_client = AsyncClient::new(client, (), process).unwrap();
-    // processing starts here
+
 
     // 5. wait or do some processing while your handler is running in real time.
     println!("Enter an integer value to change the frequency of the sine wave.");

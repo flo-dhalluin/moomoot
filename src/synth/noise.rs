@@ -1,7 +1,9 @@
-use super::super::Synth;
+//use super::super::Synth;
 
 extern crate rand;
 use self::rand::distributions::{Range, IndependentSample};
+use Synth;
+use SoundSample;
 
 pub struct WhiteNoise {
     rng: rand::XorShiftRng
@@ -16,10 +18,9 @@ impl WhiteNoise {
 }
 
 impl Synth for WhiteNoise {
-    fn reset(&mut self) {}
-    
-    fn sample(&mut self, frame_t: f64) -> f64 {
+
+    fn sample(&mut self) -> SoundSample {
         let between = Range::new(-1f64, 1.);
-        between.ind_sample(&mut self.rng)
+        SoundSample::Sample(between.ind_sample(&mut self.rng))
     }
 }
