@@ -95,6 +95,10 @@ impl Synth for KarplusStrong {
                 SoundSample::Sample(n) => {current_sample += n;}
                 SoundSample::Done => {}
             }
+        } else {
+            if(self.energy < 1e-9) {
+                return SoundSample::Done;
+            }
         }
 
         let res = current_sample;
@@ -110,9 +114,6 @@ impl Synth for KarplusStrong {
         let sq = self.last_feedback * self.last_feedback;
         self.energy = 0.95 * self.energy + 0.05 * sq;
 
-        if(self.energy < 1e-9) {
-            return SoundSample::Done;
-        }
         SoundSample::Sample(res)
     }
 }

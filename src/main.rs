@@ -6,9 +6,9 @@ use std::io;
 use std::str::FromStr;
 use std::sync::mpsc::channel;
 use jack::prelude::{Client, AsyncClient, client_options};
-use moomoot::synth::noise::WhiteNoise;
-use moomoot::synth::string::KarplusStrong;
-use moomoot::synth::sine::Sine;
+//use moomoot::synth::noise::WhiteNoise;
+//use moomoot::synth::string::KarplusStrong;
+//use moomoot::synth::sine::Sine;
 
 
 /// Attempt to read a frequency from standard in. Will block until there is user input. `None` is
@@ -30,15 +30,10 @@ fn main() {
     let (client, _status) = Client::new("rust_jack_sine", client_options::NO_START_SERVER).unwrap();
 
     let sample_rate = client.sample_rate() as f64;
-    let (tx, rx) = channel();
+    //let (tx, rx) = channel();
 
 
-    let mut process = moomoot::MooMoot::new(&client);
-
-    // processing starts here
-    process.add_synth(Box::new(Sine::new(sample_rate, 440.)));
-    process.add_synth(Box::new(Sine::new(sample_rate, 220.)));
-    process.add_synth(Box::new(Sine::new(sample_rate, 50.)));
+    let (cmd_chan, process) = moomoot::MooMoot::new( &client);
 
     // 4. activate the client
     let active_client = AsyncClient::new(client, (), process).unwrap();
@@ -47,7 +42,7 @@ fn main() {
     // 5. wait or do some processing while your handler is running in real time.
     println!("Enter an integer value to change the frequency of the sine wave.");
     while let Some(f) = read_freq() {
-        tx.send(f).unwrap();
+        cmd_chan.send( moomoot::MooMootCmd::AddSynth(String::from("kps") )).unwrap();
     }
 
     // 6. Optional deactivate. Not required since active_client will deactivate on drop, though
