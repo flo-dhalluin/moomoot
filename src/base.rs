@@ -1,7 +1,5 @@
 extern crate jack;
-use self::jack::prelude::{AudioOutPort, AudioOutSpec, Client, JackControl, ProcessHandler,
-                    ProcessScope, Port};
-
+use self::jack::prelude as j;
 use std::collections::HashMap;
 use std::sync::mpsc::*;
 
@@ -69,22 +67,23 @@ pub enum MooMootCmd {
 
 type SynthMaker = Fn(f64) -> Box<Synth>;
 
-pub struct MooMoot {
-    out_port : Port<AudioOutSpec>,
+// RT process callback
+struct MooMootProcess {
+    out_port : j::Port<j::AudioOutSpec>,
     root_mixer : Mixer,
     sample_rate : f64,
     rx : Receiver<MooMootCmd>,
     synth_makers: HashMap<String, Box<SynthMaker>>,
 }
 
-impl MooMoot {
+impl MooMootProcess {
 
     // need lifetimes here so that we know that the borrow is released
-    pub fn new(client: &Client) -> (Sender<MooMootCmd>, MooMoot) {
-        let port = client.register_port("moomoot", AudioOutSpec::default()).unwrap();
+    fn new(client: &j::Client) -> (Sender<MooMootCmd>, MooMootProcess) {
+        let port = client.register_port("moomoot1", j::AudioOutSpec::default()).unwrap();
         let sample_rate = client.sample_rate();
         let (sx, rx) = channel();
-        let mut m = MooMoot {
+        let mut m = MooMootProcess {
             out_port: port,
             sample_rate: sample_rate as f64,
             root_mixer: Mixer::new(),
@@ -106,7 +105,7 @@ impl MooMoot {
         (sx, m)
     }
 
-    pub fn command(&mut self, cmd: MooMootCmd) {
+    fn command(&mut self, cmd: MooMootCmd) {
         match cmd {
             MooMootCmd::AddSynth(name) => {
                 if let Some(fact) = self.synth_makers.get(&name) {
@@ -122,8 +121,9 @@ impl MooMoot {
     }
 }
 
-impl ProcessHandler for MooMoot {
-    fn process(&mut self, _:&Client, ps: &ProcessScope) -> JackControl {
+impl j::ProcessHandler for MooMootProcess {
+    // realtime callback
+    fn process(&mut self, _:&j::Client, ps: &j::ProcessScope) -> j::JackControl {
 
         // treat command buffer
         while let Ok(msg) = self.rx.try_recv() {
@@ -132,7 +132,7 @@ impl ProcessHandler for MooMoot {
 
         // Get output buffer
         let port = &mut self.out_port;
-        let mut out_p = AudioOutPort::new(port, ps);
+        let mut out_p = j::AudioOutPort::new(port, ps);
         let out: &mut [f32] = &mut out_p;
 
         // Check frequency requests
@@ -150,6 +150,23 @@ impl ProcessHandler for MooMoot {
         }
 
         // Continue as normal
-        JackControl::Continue
+        j::JackControl::Continue
+    }
+}
+
+
+pub struct MooMoot {
+    async_client : j::AsyncClient<(), MooMootProcess>,
+}
+
+impl MooMoot {
+    pub fn start() -> (Sender<MooMootCmd>, MooMoot) {
+            // 1. open a client
+            let (client, _status) = j::Client::new("MooMoot", j::client_options::NO_START_SERVER).unwrap();
+            let (cmd_chan, process) = MooMootProcess::new( &client);
+            // 4. activate the client
+            let active_client = j::AsyncClient::new(client, (), process).unwrap();
+
+            (cmd_chan, MooMoot { async_client: active_client})
     }
 }

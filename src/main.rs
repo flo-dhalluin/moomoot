@@ -1,14 +1,9 @@
 //! Sine wave generator with frequency configuration exposed through standard input.
-extern crate jack;
 extern crate moomoot;
 
 use std::io;
 use std::str::FromStr;
 use std::sync::mpsc::channel;
-use jack::prelude::{Client, AsyncClient, client_options};
-//use moomoot::synth::noise::WhiteNoise;
-//use moomoot::synth::string::KarplusStrong;
-//use moomoot::synth::sine::Sine;
 
 
 /// Attempt to read a frequency from standard in. Will block until there is user input. `None` is
@@ -26,18 +21,8 @@ fn read_freq() -> Option<f64> {
 
 
 fn main() {
-    // 1. open a client
-    let (client, _status) = Client::new("rust_jack_sine", client_options::NO_START_SERVER).unwrap();
 
-    let sample_rate = client.sample_rate() as f64;
-    //let (tx, rx) = channel();
-
-
-    let (cmd_chan, process) = moomoot::MooMoot::new( &client);
-
-    // 4. activate the client
-    let active_client = AsyncClient::new(client, (), process).unwrap();
-
+    let (cmd_chan, moomoot) = moomoot::MooMoot::start();
 
     // 5. wait or do some processing while your handler is running in real time.
     println!("Enter an integer value to change the frequency of the sine wave.");
@@ -45,7 +30,4 @@ fn main() {
         cmd_chan.send( moomoot::MooMootCmd::AddSynth(String::from("kps") )).unwrap();
     }
 
-    // 6. Optional deactivate. Not required since active_client will deactivate on drop, though
-    // explicit deactivate may help you identify errors in deactivate.
-    active_client.deactivate().unwrap();
 }
