@@ -96,15 +96,21 @@ impl MooMoot {
 
     // they shall error ?
     pub fn add_mixer(&mut self, parent: &str, kid: &str) {
-        self.send_channel.send(InternalCmd::AddMixer(parent.to_string(), kid.to_string()));
+        self.send_channel
+            .send(InternalCmd::AddMixer(parent.to_string(), kid.to_string()))
+            .expect("can't send command to MooMoot (RT process stopped)");
     }
 
-    pub fn add_synth(&mut self, parent: &str, synth: Box<Synth>) {
-        self.send_channel.send(InternalCmd::AddSynth(parent.to_string(), synth));
+    pub fn add_synth<T:Synth + 'static>(&mut self, parent: &str, synth: T) {
+        self.send_channel
+            .send(InternalCmd::AddSynth(parent.to_string(), Box::new(synth)))
+            .expect("can't send command to MooMoot (RT process stopped)");
     }
 
-    pub fn add_efx(&mut self, parent: &str, efx: Box<Efx>) {
-        self.send_channel.send(InternalCmd::AddEfx(parent.to_string(), efx));
+    pub fn add_efx<T:Efx + 'static>(&mut self, parent: &str, efx: T) {
+        self.send_channel
+            .send(InternalCmd::AddEfx(parent.to_string(), Box::new(efx)))
+            .expect("can't send command to MooMoot (RT process stopped)");
     }
 
     pub fn get_sampling_rate(&self) -> f64 {

@@ -17,15 +17,15 @@ fn main() {
 
     m.add_mixer("root", "noiz");
 
-    m.add_synth("noiz", Box::new(WhiteNoise::new()));
-    m.add_efx("noiz", Box::new(Volume::new(0.1)));
+    m.add_synth("noiz", WhiteNoise::new());
+    m.add_efx("noiz", Volume::new(0.1));
 
     let mut note:f64 = 1.0;
     let mut random: u64 = 852;
     loop {
 
-        m.add_synth("blah", Box::new(KarplusStrong::new(note*50.0, 1./srate, 6000., 0.99)));
-        m.add_synth("blah", Box::new(KarplusStrong::new(note*100.0, 1./srate, 6000., 0.99)));
+        m.add_synth("blah", KarplusStrong::new(note*50.0, 1./srate, 6000., 0.99));
+        m.add_synth("blah", KarplusStrong::new(note*100.0, 1./srate, 6000., 0.99));
 
 
         thread::sleep(time::Duration::from_millis(250 + random));
@@ -34,7 +34,7 @@ fn main() {
 
         note *= 1.3;
 
-        if(note > 20.0) {
+        if note > 20.0 {
             note = 1.0;
         }
     }
