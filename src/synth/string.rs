@@ -91,10 +91,9 @@ impl Synth for KarplusStrong {
         let mut current_sample = self.last_feedback;
 
         if(self.time < self.period) {
-            match self.noise_synt.sample() {
-                SoundSample::Sample(n) => {current_sample += n;}
-                SoundSample::Done => {}
-            }
+            if let SoundSample::Sample(n) = self.noise_synt.sample() {
+                current_sample += n;
+            }            
         } else {
             if(self.energy < 1e-9) {
                 return SoundSample::Done;

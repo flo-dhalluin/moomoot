@@ -1,11 +1,15 @@
+extern crate uuid;
+
 mod base;
-//mod looper;
+mod traits;
 pub mod synth;
+pub mod efx;
+mod tree;
 
 pub use base::MooMoot;
-pub use base::Synth;
-pub use base::SoundSample;
-pub use base::MooMootCmd;
+
+pub use traits::SoundSample;
+pub use traits::Synth;
 
 //pub use looper::Looper;
 

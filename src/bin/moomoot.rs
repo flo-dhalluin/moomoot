@@ -1,33 +1,43 @@
-//! Sine wave generator with frequency configuration exposed through standard input.
 extern crate moomoot;
 
-use std::io;
-use std::str::FromStr;
-use std::sync::mpsc::channel;
-
-
-/// Attempt to read a frequency from standard in. Will block until there is user input. `None` is
-/// returned if there was an error reading from standard in, or the retrieved string wasn't a
-/// compatible u16 integer.
-fn read_freq() -> Option<f64> {
-    let mut user_input = String::new();
-    match io::stdin().read_line(&mut user_input) {
-        Ok(_) => u16::from_str(&user_input.trim()).ok().map(|n| n as f64),
-        Err(_) => None,
-    }
-}
-
-
+use moomoot::MooMoot;
+use moomoot::synth::string::KarplusStrong;
+use moomoot::synth::noise::WhiteNoise;
+use moomoot::efx::volume::Volume;
+use std::{time, thread};
 
 
 fn main() {
 
-    let (cmd_chan, moomoot) = moomoot::MooMoot::start();
+    let mut m = MooMoot::start();
 
-    // 5. wait or do some processing while your handler is running in real time.
-    println!("Enter an integer value to change the frequency of the sine wave.");
-    while let Some(f) = read_freq() {
-        cmd_chan.send( moomoot::MooMootCmd::AddSynth(String::from("kps") )).unwrap();
+    let srate = m.get_sampling_rate();
+
+    m.add_mixer("root", "blah");
+
+    m.add_mixer("root", "noiz");
+
+    m.add_synth("noiz", Box::new(WhiteNoise::new()));
+    m.add_efx("noiz", Box::new(Volume::new(0.1)));
+
+    let mut note:f64 = 1.0;
+    let mut random: u64 = 852;
+    loop {
+
+        m.add_synth("blah", Box::new(KarplusStrong::new(note*50.0, 1./srate, 6000., 0.99)));
+        m.add_synth("blah", Box::new(KarplusStrong::new(note*100.0, 1./srate, 6000., 0.99)));
+
+
+        thread::sleep(time::Duration::from_millis(250 + random));
+
+        random = (random * 17) % 634 + 13;
+
+        note *= 1.3;
+
+        if(note > 20.0) {
+            note = 1.0;
+        }
     }
+
 
 }
