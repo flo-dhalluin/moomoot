@@ -13,19 +13,19 @@ fn main() {
 
     let srate = m.get_sampling_rate();
 
-    m.add_mixer("root", "blah");
+    let root = m.root_mixer();
+    let blah = m.add_mixer(&root, "blah");
+    let noise = m.add_mixer(&root, "noiz");
 
-    m.add_mixer("root", "noiz");
-
-    m.add_synth("noiz", WhiteNoise::new());
-    m.add_efx("noiz", Volume::new(0.1));
+    m.add_synth(&noise, WhiteNoise::new());
+    m.add_efx(&noise, Volume::new(0.1));
 
     let mut note:f64 = 1.0;
     let mut random: u64 = 852;
     loop {
 
-        m.add_synth("blah", KarplusStrong::new(note*50.0, 1./srate, 6000., 0.99));
-        m.add_synth("blah", KarplusStrong::new(note*100.0, 1./srate, 6000., 0.99));
+        m.add_synth(&blah, KarplusStrong::new(note*50.0, 1./srate, 6000., 0.99));
+        m.add_synth(&blah, KarplusStrong::new(note*100.0, 1./srate, 6000., 0.99));
 
 
         thread::sleep(time::Duration::from_millis(250 + random));

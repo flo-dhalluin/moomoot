@@ -1,7 +1,6 @@
-extern crate jack;
-use self::jack::prelude as j;
+use jack::prelude as j;
 use std::sync::mpsc::*;
-
+use uuid::Uuid;
 use tree::mmtree::MMTree;
 use traits::*;
 
@@ -72,14 +71,21 @@ impl j::ProcessHandler for InternalProcess {
     }
 }
 
+/// Opaque type for a mixer
+pub struct MixerH(String);
 
+
+/// The MooMooT server object.
 pub struct MooMoot {
     async_client : j::AsyncClient<(), InternalProcess>,
     sample_rate : f64,
     send_channel : Sender<InternalCmd>
 }
 
+
 impl MooMoot {
+    /// Create a MooMooT instance, instantiate the jack port
+    /// and starts jack RT thread.
     pub fn start() -> MooMoot {
             // 1. open a client
             let (client, _status) = j::Client::new("MooMoot", j::client_options::NO_START_SERVER).unwrap();
@@ -94,25 +100,36 @@ impl MooMoot {
                  send_channel:cmd_chan}
     }
 
-    // they shall error ?
-    pub fn add_mixer(&mut self, parent: &str, kid: &str) {
+    /// get an handle to the "root" mixer
+    pub fn root_mixer(&self) -> MixerH {
+        MixerH("root".to_string())
+    }
+
+    /// create a mixer node.
+    pub fn add_mixer(&mut self, parent: &MixerH, name_prefix: &str) -> MixerH {
+
+        let mixer_id = format!("{}-{}", name_prefix, Uuid::new_v4().simple());
         self.send_channel
-            .send(InternalCmd::AddMixer(parent.to_string(), kid.to_string()))
+            .send(InternalCmd::AddMixer(parent.0.clone(), mixer_id.clone()))
+            .expect("can't send command to MooMoot (RT process stopped)");
+        MixerH(mixer_id)
+    }
+
+    /// add a synth to a mixer node.
+    pub fn add_synth<T:Synth + 'static>(&mut self, mixer: &MixerH, synth: T) {
+        self.send_channel
+            .send(InternalCmd::AddSynth(mixer.0.clone(), Box::new(synth)))
             .expect("can't send command to MooMoot (RT process stopped)");
     }
 
-    pub fn add_synth<T:Synth + 'static>(&mut self, parent: &str, synth: T) {
+    /// add an effect to them mixer
+    pub fn add_efx<T:Efx + 'static>(&mut self, mixer: &MixerH, efx: T) {
         self.send_channel
-            .send(InternalCmd::AddSynth(parent.to_string(), Box::new(synth)))
+            .send(InternalCmd::AddEfx(mixer.0.clone(), Box::new(efx)))
             .expect("can't send command to MooMoot (RT process stopped)");
     }
 
-    pub fn add_efx<T:Efx + 'static>(&mut self, parent: &str, efx: T) {
-        self.send_channel
-            .send(InternalCmd::AddEfx(parent.to_string(), Box::new(efx)))
-            .expect("can't send command to MooMoot (RT process stopped)");
-    }
-
+    /// returns sampling rate ( in seconds )
     pub fn get_sampling_rate(&self) -> f64 {
         self.sample_rate
     }

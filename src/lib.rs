@@ -1,4 +1,5 @@
 extern crate uuid;
+extern crate jack;
 
 mod base;
 mod traits;
@@ -10,9 +11,3 @@ pub use base::MooMoot;
 
 pub use traits::SoundSample;
 pub use traits::Synth;
-
-//pub use looper::Looper;
-
-pub fn say_yo() {
-    print!("yraco !");
-}
