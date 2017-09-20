@@ -1,4 +1,4 @@
-use traits::Synth;
+use synth::Synth;
 use traits::Efx;
 use traits::SoundSample;
 use std;
@@ -103,7 +103,13 @@ fn sample_and_remove<S:AsSynth>(synths: &mut Vec<S>) -> SoundSample {
     samples.into_iter().sum()
 }
 
+
 impl Synth for Mixer {
+
+    fn new(frame_t: f64) -> Mixer {
+        panic!("Mixer is not a synth")
+    }
+
     fn sample(&mut self) -> SoundSample {
 
         let res = sample_and_remove(&mut self.synths)

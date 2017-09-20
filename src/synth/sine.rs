@@ -1,28 +1,56 @@
-use Synth;
+use super::Synth;
+use super::SynthParams;
+use super::SynthParam;
 use SoundSample;
 use std::f64::consts::PI;
 
-pub struct Sine {
-    time: f64,
-    freq: f64,
-    frame_t: f64,
+
+struct SineParams {
+    pub amplitude : SynthParam,
+    pub frequency : SynthParam,
 }
 
-impl Sine {
-    pub fn new(sample_rate: f64, freq: f64) -> Sine {
-        Sine{
-            time: 0.,
-            frame_t: 1./sample_rate,
-            freq: freq
+impl SynthParams for SineParams {
+    fn list_params(&self) -> Vec<&str> {
+        vec!["amplitude", "frequency"]
+    }
+
+    fn set_param_value(&mut self, name: &str, value: SynthParam) {
+        match name {
+            "amplitude" => self.amplitude = value,
+            "frequency" => self.frequency = value,
+            _ => {} //
         }
     }
 }
 
+pub struct Sine{
+    params: SineParams,
+    time: f64,
+    frame_t: f64,
+}
+
 impl Synth for Sine {
 
-    fn sample(&mut self) -> SoundSample {
-        let x = self.freq * self.time * 2.0 * PI;
-        self.time += self.frame_t;
-        SoundSample::Sample(x.sin())
+    fn new(frame_t: f64) -> Sine {
+        Sine {
+            time: 0.,
+            frame_t: frame_t,
+            params: SineParams { amplitude:SynthParam::DefaultValue(1.0),
+                    frequency:SynthParam::DefaultValue(440.0)}
+        }
     }
+
+//    type Params = SineSynthParam;
+
+    fn get_params(&mut self) -> &mut SynthParams {
+        return &mut self.params;
+    }
+
+    fn sample(&mut self) -> SoundSample {
+        let x = self.params.frequency.value() * self.time * 2.0 * PI;
+        self.time += self.frame_t;
+        SoundSample::Sample(x.sin() * self.params.amplitude.value())
+    }
+
 }

@@ -1,20 +1,27 @@
 
 use tree::mixer::Mixer;
 use traits::*;
+use super::bus::BusSystem;
+use synth::Synth;
+use synth::builder;
 use uuid::Uuid;
+use std::error::Error;
 
 pub struct MMTree {
-    root_mixer: Box<Mixer>
+    root_mixer: Box<Mixer>,
+    buses: BusSystem,
 }
+
 
 impl MMTree {
     pub fn new() -> MMTree {
-        MMTree { root_mixer: Box::new(Mixer::new("root"))}
+        MMTree { root_mixer: Box::new(Mixer::new("root")),
+                 buses: BusSystem::new()}
     }
 
 
     // "transient" mixer, removed when AsMut
-    pub fn add_transient_mixer(&mut self, parent: &str) -> Result<String, &'static str> {
+    pub fn add_transient_mixer(&mut self, parent: &str) -> Result<String, &str> {
         if let Some(mxr) = self.root_mixer.find_mixer(parent) {
             let uuid = Uuid::new_v4(); //Uuid::new_v4();
             let mixer_id = uuid.simple().to_string();
@@ -26,7 +33,7 @@ impl MMTree {
     }
 
     // "named" mixer. It'll stay there. CANNOT have a non named parent
-    pub fn add_mixer(&mut self, parent: &str, mixer_id: &str) -> Result<(), &'static str> {
+    pub fn add_mixer(&mut self, parent: &str, mixer_id: &str) -> Result<(), &str> {
 
         if let Some(mxr) = self.root_mixer.find_mixer(parent) {
             mxr.add_sub_mixer( Mixer::new(mixer_id));
@@ -37,7 +44,9 @@ impl MMTree {
     }
 
     // takes a Box, as Synth is a trait.
-    pub fn add_synth(&mut self, mixer_id: &str, synth: Box<Synth>) -> Result<(), &'static str> {
+    pub fn add_synth(&mut self, mixer_id: &str, mut synth: Box<Synth>, params: Vec<(String, ParamValue)>) -> Result<(), &str> {
+
+        builder::init_synth(synth.as_mut(), &mut self.buses, params);
 
         if let Some(mxr) = self.root_mixer.find_mixer(mixer_id) {
             mxr.add_synth(synth);
@@ -47,7 +56,12 @@ impl MMTree {
         }
     }
 
-    pub fn add_efx(&mut self, mixer_id: &str, fx: Box<Efx>) -> Result<(), &'static str> {
+    pub fn set_bus_value(&mut self, bus: &str, value: f64) -> Result<(), &str>{
+        self.buses.publish(bus, value )
+            .map_err(|_| "no such channel")
+    }
+
+    pub fn add_efx(&mut self, mixer_id: &str, fx: Box<Efx>) -> Result<(), &str> {
 
         if let Some(mxr) = self.root_mixer.find_mixer(mixer_id) {
             mxr.add_efx(fx);

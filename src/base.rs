@@ -3,13 +3,17 @@ use std::sync::mpsc::*;
 use uuid::Uuid;
 use tree::mmtree::MMTree;
 use traits::*;
+use synth::Synth;
+
+type Params = Vec<(String, ParamValue)>;
 
 // #[derive(Debug)]
 enum InternalCmd {
     // internal commands to pass to RT thread
     AddMixer(String, String),  // parent , kid
     AddEfx(String, Box<Efx>),
-    AddSynth(String, Box<Synth>)
+    AddSynth(String, Box<Synth>, Params), // could be consumable iterator, instead of vec
+    SetBusValue(String, f64),
 }
 
 
@@ -35,11 +39,12 @@ impl InternalProcess {
         (sx, m)
     }
 
-    fn command(&mut self, cmd: InternalCmd) -> Result<(),&'static str>{
+    fn command(&mut self, cmd: InternalCmd) -> Result<(),&str>{
         match cmd {
-            InternalCmd::AddSynth(p, synth) => self.synth_tree.add_synth(&p, synth),
+            InternalCmd::AddSynth(p, synth, params) => self.synth_tree.add_synth(&p, synth, params),
             InternalCmd::AddEfx(p, efx) => self.synth_tree.add_efx(&p, efx),
-            InternalCmd::AddMixer(p, mixer_id) => self.synth_tree.add_mixer(&p, &mixer_id)
+            InternalCmd::AddMixer(p, mixer_id) => self.synth_tree.add_mixer(&p, &mixer_id),
+            InternalCmd::SetBusValue(bus, value) => self.synth_tree.set_bus_value(&bus, value),
         }
     }
 }
@@ -82,7 +87,6 @@ pub struct MooMoot {
     send_channel : Sender<InternalCmd>
 }
 
-
 impl MooMoot {
     /// Create a MooMooT instance, instantiate the jack port
     /// and starts jack RT thread.
@@ -116,9 +120,10 @@ impl MooMoot {
     }
 
     /// add a synth to a mixer node.
-    pub fn add_synth<T:Synth + 'static>(&mut self, mixer: &MixerH, synth: T) {
+    pub fn add_synth<T:'static + Synth>(&mut self, mixer: &MixerH, params: Params) {
+        let synth = Box::new(T::new(1. / self.sample_rate));
         self.send_channel
-            .send(InternalCmd::AddSynth(mixer.0.clone(), Box::new(synth)))
+            .send(InternalCmd::AddSynth(mixer.0.clone(), synth, params))
             .expect("can't send command to MooMoot (RT process stopped)");
     }
 
@@ -126,6 +131,12 @@ impl MooMoot {
     pub fn add_efx<T:Efx + 'static>(&mut self, mixer: &MixerH, efx: T) {
         self.send_channel
             .send(InternalCmd::AddEfx(mixer.0.clone(), Box::new(efx)))
+            .expect("can't send command to MooMoot (RT process stopped)");
+    }
+
+    pub fn set_bus_value(&mut self, bus: &str, value:f64) {
+        self.send_channel
+            .send(InternalCmd::SetBusValue(bus.to_string(), value))
             .expect("can't send command to MooMoot (RT process stopped)");
     }
 

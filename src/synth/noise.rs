@@ -9,15 +9,14 @@ pub struct WhiteNoise {
     rng: rand::XorShiftRng
 }
 
-impl WhiteNoise {
-    pub fn new() -> WhiteNoise {
+
+impl Synth for WhiteNoise {
+
+    fn new(frame_t:f64) -> WhiteNoise {
         WhiteNoise{
             rng: rand::weak_rng()
         }
     }
-}
-
-impl Synth for WhiteNoise {
 
     fn sample(&mut self) -> SoundSample {
         let between = Range::new(-1f64, 1.);

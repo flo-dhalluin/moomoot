@@ -38,8 +38,9 @@ impl Sum for SoundSample {
     }
 }
 
-pub trait Synth {
-    fn sample(&mut self) -> SoundSample;
+pub enum ParamValue {
+    Constant(f64),
+    BusValue(String)
 }
 
 pub trait Efx {
