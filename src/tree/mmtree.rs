@@ -4,8 +4,7 @@ use traits::*;
 use super::bus::BusSystem;
 use synth::Synth;
 use efx::Efx;
-use synth::builder;
-use synth::Parametrized;
+use params;
 use uuid::Uuid;
 use std::error::Error;
 
@@ -48,7 +47,7 @@ impl MMTree {
     // takes a Box, as Synth is a trait.
     pub fn add_synth(&mut self, mixer_id: &str, mut synth: Box<Synth>, params: Vec<(String, ParamValue)>) -> Result<(), &str> {
 
-        builder::init_synth(synth.as_mut(), &mut self.buses, params);
+        params::init_parametrized(synth.as_mut(), &mut self.buses, params);
 
         if let Some(mxr) = self.root_mixer.find_mixer(mixer_id) {
             mxr.add_synth(synth);
@@ -65,7 +64,7 @@ impl MMTree {
 
     pub fn add_efx(&mut self, mixer_id: &str, mut fx: Box<Efx>, params: Vec<(String, ParamValue)>) -> Result<(), &str> {
 
-        builder::init_synth(fx.as_mut(), &mut self.buses, params);
+        params::init_parametrized(fx.as_mut(), &mut self.buses, params);
 
         if let Some(mxr) = self.root_mixer.find_mixer(mixer_id) {
             mxr.add_efx(fx);

@@ -2,7 +2,8 @@ use super::mmtree;
 use super::mixer;
 use super::bus::{Bus,Receiver, BusSystem};
 use traits::*;
-use synth::{Synth, SynthParam, SynthParams, Parametrized};
+use synth::Synth;
+use params::{SynthParam, SynthParams, Parametrized};
 use efx::Efx;
 use efx::volume::Volume;
 

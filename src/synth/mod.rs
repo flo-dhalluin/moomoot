@@ -1,42 +1,10 @@
 pub mod noise;
 pub mod string;
 pub mod sine;
-pub mod builder;
 
-use traits::*;
-use tree::bus;
+use traits::SoundSample;
+use params::Parametrized;
 
-pub enum SynthParam {
-    Constant(f64),
-    BusValue(bus::Receiver<f64>),
-    DefaultValue(f64)
-}
-
-
-
-pub trait SynthParams {
-
-    fn list_params(&self) -> Vec<&str> {
-        Vec::new()
-    }
-    fn set_param_value(&mut self, param_id: &str, value: SynthParam) {
-    }
-}
-
-struct NullParameters;
-
-impl SynthParams for NullParameters {
-}
-
-static mut NULL_PARAMETERS: NullParameters = NullParameters{};
-
-pub trait Parametrized {
-    fn get_params(&mut self) -> &mut SynthParams {
-        unsafe { // whatever
-            &mut NULL_PARAMETERS
-        }
-    }
-}
 
 pub trait Synth : Parametrized {
 
@@ -45,14 +13,4 @@ pub trait Synth : Parametrized {
 
     fn sample(&mut self) -> SoundSample;
 
-}
-
-
-impl SynthParam {
-    pub fn value(&self) -> f64 {
-        match *self {
-            SynthParam::Constant(v) | SynthParam::DefaultValue(v) => v,
-            SynthParam::BusValue(ref rcv) => rcv.value()
-        }
-    }
 }

@@ -4,7 +4,7 @@ use std::f64::consts::PI;
 use synth::noise::WhiteNoise;
 use Synth;
 use SoundSample;
-use synth::{SynthParam, SynthParams, Parametrized};
+use params::{SynthParam, SynthParams, Parametrized};
 
 // Karplus-Strong alg.
 // https://en.wikipedia.org/wiki/Karplus%E2%80%93Strong_string_synthesis

@@ -1,5 +1,6 @@
-use synth::{Synth, Parametrized};
+use synth::Synth;
 use efx::Efx;
+use params::Parametrized;
 use traits::SoundSample;
 use std;
 

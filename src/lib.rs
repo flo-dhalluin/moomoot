@@ -3,6 +3,7 @@ extern crate jack;
 
 mod base;
 mod traits;
+mod params;
 pub mod synth;
 pub mod efx;
 mod tree;

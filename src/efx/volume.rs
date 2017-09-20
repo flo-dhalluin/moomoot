@@ -1,18 +1,18 @@
 use traits::SoundSample;
-use synth::{SynthParam, SynthParams, Parametrized};
+use params;
 use super::Efx;
 
 
 struct VolumeParams {
-    volume: SynthParam
+    volume: params::SynthParam
 }
 
-impl SynthParams for VolumeParams {
+impl params::SynthParams for VolumeParams {
     fn list_params(&self) -> Vec<&str> {
         vec!["volume"]
     }
 
-    fn set_param_value(&mut self, name: &str, value: SynthParam ) {
+    fn set_param_value(&mut self, name: &str, value: params::SynthParam ) {
         match name {
             "volume" => self.volume = value,
             _ => {}
@@ -24,8 +24,8 @@ pub struct Volume {
     params: VolumeParams
 }
 
-impl Parametrized for Volume {
-    fn get_params(&mut self) -> &mut SynthParams {
+impl params::Parametrized for Volume {
+    fn get_params(&mut self) -> &mut params::SynthParams {
         &mut self.params
     }
 }
@@ -33,7 +33,7 @@ impl Parametrized for Volume {
 impl Efx for Volume {
 
     fn new(vol: f64) -> Volume {
-        Volume{params: VolumeParams{volume: SynthParam::DefaultValue(1.)}}
+        Volume{params: VolumeParams{volume: params::SynthParam::DefaultValue(1.)}}
     }
 
 

@@ -1,7 +1,5 @@
 use super::Synth;
-use super::SynthParams;
-use super::SynthParam;
-use super::Parametrized;
+use params::{SynthParam, SynthParams, Parametrized};
 use SoundSample;
 use std::f64::consts::PI;
 
