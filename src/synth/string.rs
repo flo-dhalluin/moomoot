@@ -4,7 +4,7 @@ use std::f64::consts::PI;
 use synth::noise::WhiteNoise;
 use Synth;
 use SoundSample;
-use synth::{SynthParam, SynthParams};
+use synth::{SynthParam, SynthParams, Parametrized};
 
 // Karplus-Strong alg.
 // https://en.wikipedia.org/wiki/Karplus%E2%80%93Strong_string_synthesis
@@ -101,6 +101,12 @@ impl KarplusStrong {
     }
 }
 
+impl Parametrized for KarplusStrong {
+    fn get_params(&mut self) -> &mut SynthParams {
+        &mut self.params
+    }
+}
+
 impl Synth for KarplusStrong {
 
     fn new(frame_t : f64) -> KarplusStrong {
@@ -120,11 +126,6 @@ impl Synth for KarplusStrong {
             delay_line : FixedRingBuffer::from(Vec::new()),
             noise_synt : WhiteNoise::new(frame_t)
         }
-    }
-
-
-    fn get_params(&mut self) -> &mut SynthParams {
-        &mut self.params
     }
 
     fn sample(&mut self) -> SoundSample {

@@ -3,7 +3,9 @@ use tree::mixer::Mixer;
 use traits::*;
 use super::bus::BusSystem;
 use synth::Synth;
+use efx::Efx;
 use synth::builder;
+use synth::Parametrized;
 use uuid::Uuid;
 use std::error::Error;
 
@@ -61,7 +63,9 @@ impl MMTree {
             .map_err(|_| "no such channel")
     }
 
-    pub fn add_efx(&mut self, mixer_id: &str, fx: Box<Efx>) -> Result<(), &str> {
+    pub fn add_efx(&mut self, mixer_id: &str, mut fx: Box<Efx>, params: Vec<(String, ParamValue)>) -> Result<(), &str> {
+
+        builder::init_synth(fx.as_mut(), &mut self.buses, params);
 
         if let Some(mxr) = self.root_mixer.find_mixer(mixer_id) {
             mxr.add_efx(fx);

@@ -4,6 +4,7 @@ use uuid::Uuid;
 use tree::mmtree::MMTree;
 use traits::*;
 use synth::Synth;
+use efx::Efx;
 
 type Params = Vec<(String, ParamValue)>;
 
@@ -11,7 +12,7 @@ type Params = Vec<(String, ParamValue)>;
 enum InternalCmd {
     // internal commands to pass to RT thread
     AddMixer(String, String),  // parent , kid
-    AddEfx(String, Box<Efx>),
+    AddEfx(String, Box<Efx>, Params),
     AddSynth(String, Box<Synth>, Params), // could be consumable iterator, instead of vec
     SetBusValue(String, f64),
 }
@@ -42,7 +43,7 @@ impl InternalProcess {
     fn command(&mut self, cmd: InternalCmd) -> Result<(),&str>{
         match cmd {
             InternalCmd::AddSynth(p, synth, params) => self.synth_tree.add_synth(&p, synth, params),
-            InternalCmd::AddEfx(p, efx) => self.synth_tree.add_efx(&p, efx),
+            InternalCmd::AddEfx(p, efx, params) => self.synth_tree.add_efx(&p, efx, params),
             InternalCmd::AddMixer(p, mixer_id) => self.synth_tree.add_mixer(&p, &mixer_id),
             InternalCmd::SetBusValue(bus, value) => self.synth_tree.set_bus_value(&bus, value),
         }
@@ -128,9 +129,10 @@ impl MooMoot {
     }
 
     /// add an effect to them mixer
-    pub fn add_efx<T:Efx + 'static>(&mut self, mixer: &MixerH, efx: T) {
+    pub fn add_efx<T:Efx + 'static>(&mut self, mixer: &MixerH, params: Params) {
+        let efx = Box::new(T::new(1. / self.sample_rate));
         self.send_channel
-            .send(InternalCmd::AddEfx(mixer.0.clone(), Box::new(efx)))
+            .send(InternalCmd::AddEfx(mixer.0.clone(), efx, params))
             .expect("can't send command to MooMoot (RT process stopped)");
     }
 

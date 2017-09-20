@@ -2,7 +2,9 @@ use super::mmtree;
 use super::mixer;
 use super::bus::{Bus,Receiver, BusSystem};
 use traits::*;
-use synth::{Synth, SynthParam, SynthParams};
+use synth::{Synth, SynthParam, SynthParams, Parametrized};
+use efx::Efx;
+use efx::volume::Volume;
 
 #[test]
 fn create_tree() {
@@ -36,16 +38,8 @@ impl Synth for CstSynth {
     }
 }
 
-struct VolumeEfx {
-    vol: f64
-}
+impl Parametrized for CstSynth {}
 
-impl Efx for VolumeEfx {
-
-    fn sample(&mut self, sample: f64) -> SoundSample {
-        SoundSample::Sample( self.vol * sample)
-    }
-}
 
 #[test]
 fn mixer_sample() {
@@ -63,7 +57,9 @@ fn mixer_sample() {
 fn mixer_efx() {
     let mut mixer = mixer::Mixer::new("test");
     mixer.add_synth(Box::new(CstSynth{value: 1.0}));
-    mixer.add_efx(Box::new(VolumeEfx{vol:0.6}));
+    let mut v = Box::new(Volume::new(1.0));
+    v.as_mut().get_params().set_param_value("volume", SynthParam::Constant(0.6));
+    mixer.add_efx(v);
 
     assert_eq!(mixer.sample(), SoundSample::Sample(0.6));
 }
@@ -83,7 +79,7 @@ fn mixer_cascade() {
     t.add_synth("mixer2", Box::new(CstSynth{value:0.3}), Vec::new());
     assert_eq!(t.sample(), SoundSample::Sample(0.4));
 
-    t.add_efx("mixer2", Box::new(VolumeEfx{vol:0.5}));
+    t.add_efx("mixer2", Box::new(Volume::new(1.0)), vec![("volume".to_string(), ParamValue::Constant(0.5))]); // 0.5
     assert_eq!(t.sample(), SoundSample::Sample(0.25));
 }
 
@@ -92,16 +88,18 @@ struct ShittyEnvelope {
     tic: usize
 }
 
-impl ShittyEnvelope {
-    fn new(nb_samples: usize) -> ShittyEnvelope {
+impl Parametrized for ShittyEnvelope {}
+
+
+impl Efx for ShittyEnvelope {
+
+    fn new(_ : f64) -> ShittyEnvelope {
         ShittyEnvelope {
-            nb_samples: nb_samples,
+            nb_samples: 3,
             tic: 0
         }
     }
-}
 
-impl Efx for ShittyEnvelope {
 
     fn sample(&mut self, sample: f64) -> SoundSample {
         if self.tic < self.nb_samples {
@@ -123,7 +121,7 @@ fn transient_mixers() {
     let transient_mixer_id = tree.add_transient_mixer("root").unwrap();
 
     tree.add_synth(&transient_mixer_id, Box::new(CstSynth{value: 0.42}), Vec::new());
-    tree.add_efx(&transient_mixer_id, Box::new(ShittyEnvelope::new(3)));
+    tree.add_efx(&transient_mixer_id, Box::new(ShittyEnvelope::new(42.00)), Vec::new());
 
     tree.add_mixer("root", "not_transient");
 
@@ -217,13 +215,16 @@ struct CstSynthWithP {
     params: CstSynthParams
 }
 
+impl Parametrized for CstSynthWithP {
+    fn get_params(&mut self) -> &mut SynthParams {
+        &mut self.params
+    }
+
+}
+
 impl Synth for CstSynthWithP {
     fn new(frame_t:f64) -> CstSynthWithP {
         CstSynthWithP{params:CstSynthParams{value:SynthParam::DefaultValue(1.)}}
-    }
-
-    fn get_params(&mut self) -> &mut SynthParams {
-        &mut self.params
     }
 
     fn sample(&mut self) -> SoundSample {

@@ -1,10 +1,12 @@
 use super::Synth;
 use super::SynthParams;
 use super::SynthParam;
+use super::Parametrized;
 use traits::ParamValue;
 use tree::bus;
 
-pub fn init_synth(synth: &mut Synth, buses: &mut bus::BusSystem, params: Vec<(String, ParamValue)>) {
+
+pub fn init_synth<T : Parametrized + ?Sized>(synth: &mut T, buses: &mut bus::BusSystem, params: Vec<(String, ParamValue)>) {
     let mut sparams = synth.get_params();
     for (name, value) in params.into_iter() {
         match value {

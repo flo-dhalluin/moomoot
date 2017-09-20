@@ -21,7 +21,7 @@ fn main() {
 
     // white noise beeing parameter less ..
     m.add_synth::<WhiteNoise>(&noise, Vec::new());
-    m.add_efx(&noise, Volume::new(0.1));
+    m.add_efx::<Volume>(&noise, vec![("volume".to_string(), ParamValue::Constant(0.1))]);
 
     let mut note:f64 = 1.0;
     let mut random: u64 = 852;

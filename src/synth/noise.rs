@@ -4,11 +4,13 @@ extern crate rand;
 use self::rand::distributions::{Range, IndependentSample};
 use Synth;
 use SoundSample;
+use super::Parametrized;
 
 pub struct WhiteNoise {
     rng: rand::XorShiftRng
 }
 
+impl Parametrized for WhiteNoise {}
 
 impl Synth for WhiteNoise {
 

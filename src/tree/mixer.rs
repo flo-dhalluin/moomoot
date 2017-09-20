@@ -1,5 +1,5 @@
-use synth::Synth;
-use traits::Efx;
+use synth::{Synth, Parametrized};
+use efx::Efx;
 use traits::SoundSample;
 use std;
 
@@ -103,6 +103,7 @@ fn sample_and_remove<S:AsSynth>(synths: &mut Vec<S>) -> SoundSample {
     samples.into_iter().sum()
 }
 
+impl Parametrized for Mixer {}
 
 impl Synth for Mixer {
 

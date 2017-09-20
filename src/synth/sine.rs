@@ -1,6 +1,7 @@
 use super::Synth;
 use super::SynthParams;
 use super::SynthParam;
+use super::Parametrized;
 use SoundSample;
 use std::f64::consts::PI;
 
@@ -30,6 +31,13 @@ pub struct Sine{
     frame_t: f64,
 }
 
+impl Parametrized for Sine {
+    fn get_params(&mut self) -> &mut SynthParams {
+        return &mut self.params;
+    }
+}
+
+
 impl Synth for Sine {
 
     fn new(frame_t: f64) -> Sine {
@@ -42,10 +50,6 @@ impl Synth for Sine {
     }
 
 //    type Params = SineSynthParam;
-
-    fn get_params(&mut self) -> &mut SynthParams {
-        return &mut self.params;
-    }
 
     fn sample(&mut self) -> SoundSample {
         let x = self.params.frequency.value() * self.time * 2.0 * PI;

@@ -30,18 +30,21 @@ impl SynthParams for NullParameters {
 
 static mut NULL_PARAMETERS: NullParameters = NullParameters{};
 
-pub trait Synth {
+pub trait Parametrized {
+    fn get_params(&mut self) -> &mut SynthParams {
+        unsafe { // whatever
+            &mut NULL_PARAMETERS
+        }
+    }
+}
+
+pub trait Synth : Parametrized {
 
     /// factory method : takes in the "frame time"
     fn new(frame_t: f64) -> Self where Self:Sized;
 
     fn sample(&mut self) -> SoundSample;
 
-    fn get_params(&mut self) -> &mut SynthParams {
-        unsafe { // whatever
-            &mut NULL_PARAMETERS
-        }
-    }
 }
 
 

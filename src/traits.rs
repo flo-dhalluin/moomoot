@@ -42,7 +42,3 @@ pub enum ParamValue {
     Constant(f64),
     BusValue(String)
 }
-
-pub trait Efx {
-    fn sample(&mut self, sample: f64) -> SoundSample;
-}
