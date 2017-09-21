@@ -9,5 +9,4 @@ matrix:
 addons:
   apt:
     packages:
-      -libjack-jackd2-dev
-      
+      - libjack-jackd2-dev
