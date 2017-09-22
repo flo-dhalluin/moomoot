@@ -7,17 +7,14 @@ use SoundSample;
 use super::Parametrized;
 
 pub struct WhiteNoise {
-    rng: rand::XorShiftRng
+    rng: rand::XorShiftRng,
 }
 
 impl Parametrized for WhiteNoise {}
 
 impl Synth for WhiteNoise {
-
-    fn new(frame_t:f64) -> WhiteNoise {
-        WhiteNoise{
-            rng: rand::weak_rng()
-        }
+    fn new(frame_t: f64) -> WhiteNoise {
+        WhiteNoise { rng: rand::weak_rng() }
     }
 
     fn sample(&mut self) -> SoundSample {

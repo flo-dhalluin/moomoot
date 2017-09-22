@@ -22,17 +22,18 @@ struct FixedRingBuffer {
 
 
 impl FixedRingBuffer {
-
     #[inline]
-	pub fn len(&self) -> usize{self.queue.len()}
+    pub fn len(&self) -> usize {
+        self.queue.len()
+    }
 
     // actually queue and dequeue ..
-	pub fn queue(&mut self, elem: &mut f64) {
-		let len = self.len();
-		self.idx = (self.idx + len - 1) % len;
+    pub fn queue(&mut self, elem: &mut f64) {
+        let len = self.len();
+        self.idx = (self.idx + len - 1) % len;
         //println!(" queue idx : {} / {} <= {}", self.idx, len, elem);
-		mem::swap(unsafe{self.queue.get_unchecked_mut(self.idx)}, elem);
-	}
+        mem::swap(unsafe { self.queue.get_unchecked_mut(self.idx) }, elem);
+    }
 
     pub fn set_all(&mut self, elem: f64) {
         for e in self.queue.iter_mut() {
@@ -41,24 +42,23 @@ impl FixedRingBuffer {
     }
 }
 
-impl From<Vec<f64>> for FixedRingBuffer{
-	fn from(vec: Vec<f64>) -> Self{
-		debug_assert!(vec.len() > 0);
-		FixedRingBuffer{
-			queue: vec.into_boxed_slice(),
-			idx: 0
-		}
-	}
+impl From<Vec<f64>> for FixedRingBuffer {
+    fn from(vec: Vec<f64>) -> Self {
+        debug_assert!(vec.len() > 0);
+        FixedRingBuffer {
+            queue: vec.into_boxed_slice(),
+            idx: 0,
+        }
+    }
 }
 
 struct KarplusStrongParams {
     cutoff_freq: SynthParam,
     base_freq: SynthParam,
-    feedback_gain: SynthParam // sustain 1 = inifinite ..
+    feedback_gain: SynthParam, // sustain 1 = inifinite ..
 }
 
 impl SynthParams for KarplusStrongParams {
-
     fn list_params(&self) -> Vec<&str> {
         vec!["cutoff_freq", "base_freq", "feedback_gain"]
     }
@@ -68,7 +68,7 @@ impl SynthParams for KarplusStrongParams {
             "cutoff_freq" => self.cutoff_freq = value,
             "base_freq" => self.base_freq = value,
             "feedback_gain" => self.feedback_gain = value,
-            _ => {},
+            _ => {}
         }
     }
 }
@@ -80,8 +80,7 @@ pub struct KarplusStrong {
     last_feedback: f64,
     energy: f64,
     delay_line: FixedRingBuffer,
-    noise_synt: WhiteNoise
-
+    noise_synt: WhiteNoise,
 }
 
 impl KarplusStrong {
@@ -91,7 +90,7 @@ impl KarplusStrong {
     // sustain : gain of the feedback 0 : non sustain - 1: inifinte
 
     fn update_delay_line(&mut self) -> usize {
-        let line_len_f = (1. / ( self.params.base_freq.value() * self.frame_t));
+        let line_len_f = (1. / (self.params.base_freq.value() * self.frame_t));
         let line_len = line_len_f as usize + 1;
         if line_len != self.delay_line.len() {
             self.delay_line = FixedRingBuffer::from(vec![0.; line_len]);
@@ -108,8 +107,7 @@ impl Parametrized for KarplusStrong {
 }
 
 impl Synth for KarplusStrong {
-
-    fn new(frame_t : f64) -> KarplusStrong {
+    fn new(frame_t: f64) -> KarplusStrong {
 
         let params = KarplusStrongParams {
             cutoff_freq: SynthParam::DefaultValue(6000.0),
@@ -123,8 +121,8 @@ impl Synth for KarplusStrong {
             frame_t: frame_t,
             last_feedback: 0.,
             energy: 1.,
-            delay_line : FixedRingBuffer::from(Vec::new()),
-            noise_synt : WhiteNoise::new(frame_t)
+            delay_line: FixedRingBuffer::from(Vec::new()),
+            noise_synt: WhiteNoise::new(frame_t),
         }
     }
 
@@ -136,8 +134,8 @@ impl Synth for KarplusStrong {
                 if let SoundSample::Sample(n) = self.noise_synt.sample() {
                     current_sample += n;
                 }
-            }  else {
-                if(self.energy < 1e-9) {
+            } else {
+                if (self.energy < 1e-9) {
                     return SoundSample::Done;
                 }
             }
@@ -151,8 +149,8 @@ impl Synth for KarplusStrong {
         // current_sample now is equal to "head" of the ring buffer.
 
         let alpha = {
-            let p = 2. * PI *self.frame_t*self.params.cutoff_freq.value();
-            p / ( p + 1.)
+            let p = 2. * PI * self.frame_t * self.params.cutoff_freq.value();
+            p / (p + 1.)
         };
 
         self.last_feedback = alpha * current_sample + (1. - alpha) * self.last_feedback;

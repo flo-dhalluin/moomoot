@@ -9,7 +9,8 @@ struct ReceiverBox<T> {
     last_value: Cell<T>,
 }
 
-pub struct Receiver<T> {  // ok now can we avoid the Rc / Cell crap with nice RAII ?
+pub struct Receiver<T> {
+    // ok now can we avoid the Rc / Cell crap with nice RAII ?
     inner: Rc<ReceiverBox<T>>,
 }
 
@@ -49,20 +50,19 @@ where
 
     pub fn publish(&mut self, value: T) {
         // update receivers, or remove them if dead.
-        self.receivers
-            .retain(|w_recv| if let Some(rcv) = w_recv.upgrade() {
+        self.receivers.retain(
+            |w_recv| if let Some(rcv) = w_recv.upgrade() {
                 rcv.last_value.set(value);
                 true
             } else {
                 false
-            });
+            },
+        );
         self.last_value = value;
     }
 
     pub fn sub(&mut self) -> Receiver<T> {
-        let receiver = Rc::new(ReceiverBox {
-            last_value: Cell::new(self.last_value),
-        });
+        let receiver = Rc::new(ReceiverBox { last_value: Cell::new(self.last_value) });
         self.receivers.push(Rc::downgrade(&receiver));
         Receiver { inner: receiver }
     }
@@ -74,14 +74,17 @@ where
 
 #[derive(Debug)]
 pub enum BusError {
-    NoSuchChannel(String)
+    NoSuchChannel(String),
 }
 
 impl fmt::Display for BusError {
     fn fmt(&self, fmt: &mut fmt::Formatter) -> fmt::Result {
         match *self {
-            BusError::NoSuchChannel(ref chan) => fmt.debug_struct("NoSuchChannel").field("channel", &chan)
-            .finish()
+            BusError::NoSuchChannel(ref chan) => {
+                fmt.debug_struct("NoSuchChannel")
+                    .field("channel", &chan)
+                    .finish()
+            }
         }
     }
 }
@@ -89,34 +92,34 @@ impl fmt::Display for BusError {
 impl error::Error for BusError {
     fn description(&self) -> &str {
         match *self {
-            BusError::NoSuchChannel(_) => "No such channel"
+            BusError::NoSuchChannel(_) => "No such channel",
         }
     }
 }
 
 pub struct BusSystem {
-    busses: HashMap<String, Bus<f64>>
+    busses: HashMap<String, Bus<f64>>,
 }
 
 
 impl BusSystem {
     // ok, there's a big fat leak : when there are no listenner to a bus, it stays in the map.
     pub fn new() -> BusSystem {
-        BusSystem{ busses: HashMap::new() }
+        BusSystem { busses: HashMap::new() }
     }
 
     // ideally sub<T> -> Receiver<T>
     pub fn sub(&mut self, chan: &str) -> Receiver<f64> {
 
-        self.busses.entry(chan.to_string())
+        self.busses
+            .entry(chan.to_string())
             .or_insert(Bus::new(chan, 0.0))
             .sub()
     }
 
-    pub fn publish(&mut self, chan: &str, value:f64 ) -> Result<(), BusError> {
-        self.busses.get_mut(chan)
-            .map(|c| c.publish(value))
-            .ok_or(BusError::NoSuchChannel(chan.to_string()))
+    pub fn publish(&mut self, chan: &str, value: f64) -> Result<(), BusError> {
+        self.busses.get_mut(chan).map(|c| c.publish(value)).ok_or(
+            BusError::NoSuchChannel(chan.to_string()),
+        )
     }
-
 }

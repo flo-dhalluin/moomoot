@@ -4,7 +4,7 @@ use super::Efx;
 
 
 struct VolumeParams {
-    volume: params::SynthParam
+    volume: params::SynthParam,
 }
 
 impl params::SynthParams for VolumeParams {
@@ -12,7 +12,7 @@ impl params::SynthParams for VolumeParams {
         vec!["volume"]
     }
 
-    fn set_param_value(&mut self, name: &str, value: params::SynthParam ) {
+    fn set_param_value(&mut self, name: &str, value: params::SynthParam) {
         match name {
             "volume" => self.volume = value,
             _ => {}
@@ -21,7 +21,7 @@ impl params::SynthParams for VolumeParams {
 }
 
 pub struct Volume {
-    params: VolumeParams
+    params: VolumeParams,
 }
 
 impl params::Parametrized for Volume {
@@ -31,13 +31,12 @@ impl params::Parametrized for Volume {
 }
 
 impl Efx for Volume {
-
     fn new(vol: f64) -> Volume {
-        Volume{params: VolumeParams{volume: params::SynthParam::DefaultValue(1.)}}
+        Volume { params: VolumeParams { volume: params::SynthParam::DefaultValue(1.) } }
     }
 
 
     fn sample(&mut self, sample: f64) -> SoundSample {
-        SoundSample::Sample( self.params.volume.value() * sample)
+        SoundSample::Sample(self.params.volume.value() * sample)
     }
 }

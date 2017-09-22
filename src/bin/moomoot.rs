@@ -13,26 +13,34 @@ fn main() {
 
     let mut m = MooMoot::start();
 
-    let srate = m.get_sampling_rate();
-
     let root = m.root_mixer();
     let blah = m.add_mixer(&root, "blah");
     let noise = m.add_mixer(&root, "noiz");
 
     // white noise beeing parameter less ..
     m.add_synth::<WhiteNoise>(&noise, Vec::new());
-    m.add_efx::<Volume>(&noise, vec![("volume".to_string(), ParamValue::Constant(0.1))]);
+    m.add_efx::<Volume>(
+        &noise,
+        vec![("volume".to_string(), ParamValue::Constant(0.1))],
+    );
 
-    let mut note:f64 = 1.0;
+    let mut note: f64 = 1.0;
     let mut random: u64 = 852;
     let frequency_p = "frequency".to_string();
-    m.add_synth::<Sine>(&blah,
-        vec![(frequency_p, ParamValue::BusValue("freq".to_string())),
-    ("amplitude".to_string(), ParamValue::Constant(0.4))]);
+    m.add_synth::<Sine>(
+        &blah,
+        vec![
+            (frequency_p, ParamValue::BusValue("freq".to_string())),
+            ("amplitude".to_string(), ParamValue::Constant(0.4)),
+        ],
+    );
 
     loop {
 
-        m.add_synth::<KarplusStrong>(&blah,vec![("base_freq".to_string(), ParamValue::Constant(note*75.0))]);
+        m.add_synth::<KarplusStrong>(
+            &blah,
+            vec![("base_freq".to_string(), ParamValue::Constant(note * 75.0))],
+        );
 
         m.set_bus_value("freq", note * 50.0);
 

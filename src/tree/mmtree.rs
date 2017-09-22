@@ -16,8 +16,10 @@ pub struct MMTree {
 
 impl MMTree {
     pub fn new() -> MMTree {
-        MMTree { root_mixer: Box::new(Mixer::new("root")),
-                 buses: BusSystem::new()}
+        MMTree {
+            root_mixer: Box::new(Mixer::new("root")),
+            buses: BusSystem::new(),
+        }
     }
 
 
@@ -26,7 +28,7 @@ impl MMTree {
         if let Some(mxr) = self.root_mixer.find_mixer(parent) {
             let uuid = Uuid::new_v4(); //Uuid::new_v4();
             let mixer_id = uuid.simple().to_string();
-            mxr.add_sub_mixer( Mixer::new_transient(&mixer_id));
+            mxr.add_sub_mixer(Mixer::new_transient(&mixer_id));
             Ok(mixer_id)
         } else {
             Err("can't find parent mixer")
@@ -37,7 +39,7 @@ impl MMTree {
     pub fn add_mixer(&mut self, parent: &str, mixer_id: &str) -> Result<(), &str> {
 
         if let Some(mxr) = self.root_mixer.find_mixer(parent) {
-            mxr.add_sub_mixer( Mixer::new(mixer_id));
+            mxr.add_sub_mixer(Mixer::new(mixer_id));
             Ok(())
         } else {
             Err("can't find parent mixer")
@@ -45,7 +47,12 @@ impl MMTree {
     }
 
     // takes a Box, as Synth is a trait.
-    pub fn add_synth(&mut self, mixer_id: &str, mut synth: Box<Synth>, params: Vec<(String, ParamValue)>) -> Result<(), &str> {
+    pub fn add_synth(
+        &mut self,
+        mixer_id: &str,
+        mut synth: Box<Synth>,
+        params: Vec<(String, ParamValue)>,
+    ) -> Result<(), &str> {
 
         params::init_parametrized(synth.as_mut(), &mut self.buses, params);
 
@@ -57,12 +64,18 @@ impl MMTree {
         }
     }
 
-    pub fn set_bus_value(&mut self, bus: &str, value: f64) -> Result<(), &str>{
-        self.buses.publish(bus, value )
-            .map_err(|_| "no such channel")
+    pub fn set_bus_value(&mut self, bus: &str, value: f64) -> Result<(), &str> {
+        self.buses.publish(bus, value).map_err(
+            |_| "no such channel",
+        )
     }
 
-    pub fn add_efx(&mut self, mixer_id: &str, mut fx: Box<Efx>, params: Vec<(String, ParamValue)>) -> Result<(), &str> {
+    pub fn add_efx(
+        &mut self,
+        mixer_id: &str,
+        mut fx: Box<Efx>,
+        params: Vec<(String, ParamValue)>,
+    ) -> Result<(), &str> {
 
         params::init_parametrized(fx.as_mut(), &mut self.buses, params);
 
@@ -82,5 +95,4 @@ impl MMTree {
     pub fn sample(&mut self) -> SoundSample {
         return self.root_mixer.sample();
     }
-
 }
