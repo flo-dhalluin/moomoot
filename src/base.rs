@@ -6,14 +6,13 @@ use traits::*;
 use synth::Synth;
 use efx::Efx;
 
-type Params = Vec<(String, ParamValue)>;
 
 // #[derive(Debug)]
 enum InternalCmd {
     // internal commands to pass to RT thread
     AddMixer(String, String), // parent , kid
-    AddEfx(String, Box<Efx>, Params),
-    AddSynth(String, Box<Synth>, Params), // could be consumable iterator, instead of vec
+    AddEfx(String, Box<Efx>),
+    AddSynth(String, Box<Synth>),
     SetBusValue(String, f64),
 }
 
@@ -33,7 +32,7 @@ impl InternalProcess {
             .register_port("moomoot1", j::AudioOutSpec::default())
             .unwrap();
         let (sx, rx) = channel();
-        let mut m = InternalProcess {
+        let m = InternalProcess {
             out_port: port,
             rx: rx,
             synth_tree: MMTree::new(),
@@ -43,8 +42,8 @@ impl InternalProcess {
 
     fn command(&mut self, cmd: InternalCmd) -> Result<(), &str> {
         match cmd {
-            InternalCmd::AddSynth(p, synth, params) => self.synth_tree.add_synth(&p, synth, params),
-            InternalCmd::AddEfx(p, efx, params) => self.synth_tree.add_efx(&p, efx, params),
+            InternalCmd::AddSynth(p, synth) => self.synth_tree.add_synth(&p, synth),
+            InternalCmd::AddEfx(p, efx) => self.synth_tree.add_efx(&p, efx),
             InternalCmd::AddMixer(p, mixer_id) => self.synth_tree.add_mixer(&p, &mixer_id),
             InternalCmd::SetBusValue(bus, value) => self.synth_tree.set_bus_value(&bus, value),
         }
@@ -129,18 +128,18 @@ impl MooMoot {
     }
 
     /// add a synth to a mixer node.
-    pub fn add_synth<T: 'static + Synth>(&mut self, mixer: &MixerH, params: Params) {
-        let synth = Box::new(T::new(1. / self.sample_rate));
+    pub fn add_synth<T: 'static + Synth>(&mut self, mixer: &MixerH, mut synth: T) {
+        synth.init(1. / self.sample_rate);
         self.send_channel
-            .send(InternalCmd::AddSynth(mixer.0.clone(), synth, params))
+            .send(InternalCmd::AddSynth(mixer.0.clone(), Box::new(synth)))
             .expect("can't send command to MooMoot (RT process stopped)");
     }
 
     /// add an effect to them mixer
-    pub fn add_efx<T: Efx + 'static>(&mut self, mixer: &MixerH, params: Params) {
-        let efx = Box::new(T::new(1. / self.sample_rate));
+    pub fn add_efx<T: Efx + 'static>(&mut self, mixer: &MixerH, mut efx: T) {
+        efx.init(1. / self.sample_rate);
         self.send_channel
-            .send(InternalCmd::AddEfx(mixer.0.clone(), efx, params))
+            .send(InternalCmd::AddEfx(mixer.0.clone(), Box::new(efx)))
             .expect("can't send command to MooMoot (RT process stopped)");
     }
 

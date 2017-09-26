@@ -1,6 +1,5 @@
 use synth::Synth;
 use efx::Efx;
-use params::Parametrized;
 use traits::SoundSample;
 use std;
 
@@ -72,18 +71,18 @@ impl Mixer {
 
 // them solution for downcast ..
 trait AsSynth {
-    fn as_synth(&mut self) -> &mut Synth;
+    fn sample(&mut self) -> SoundSample;
 }
 
 impl AsSynth for Box<Synth> {
-    fn as_synth(&mut self) -> &mut Synth {
-        self.as_mut()
+    fn sample(&mut self) -> SoundSample {
+        self.as_mut().sample()
     }
 }
 
-impl<T: Synth> AsSynth for Box<T> {
-    fn as_synth(&mut self) -> &mut Synth {
-        self.as_mut()
+impl AsSynth for Box<Mixer> {
+    fn sample(&mut self) -> SoundSample {
+        self.as_mut().sample()
     }
 }
 
@@ -92,7 +91,7 @@ fn sample_and_remove<S: AsSynth>(synths: &mut Vec<S>) -> SoundSample {
     let (samples, alive_synths): (Vec<_>, Vec<_>) = std::mem::replace(synths, Vec::new())
         .into_iter()
         .filter_map(|mut s| {
-            let sample = s.as_synth().sample();
+            let sample = s.sample();
             match sample {
                 SoundSample::Done => None, // pop "Done" synths
                 _ => Some((sample, s)),
@@ -104,14 +103,10 @@ fn sample_and_remove<S: AsSynth>(synths: &mut Vec<S>) -> SoundSample {
     samples.into_iter().sum()
 }
 
-impl Parametrized for Mixer {}
 
-impl Synth for Mixer {
-    fn new(_: f64) -> Mixer {
-        panic!("Mixer is not a synth")
-    }
+impl Mixer {
 
-    fn sample(&mut self) -> SoundSample {
+    pub fn sample(&mut self) -> SoundSample {
 
         let res = sample_and_remove(&mut self.synths) + sample_and_remove(&mut self.sub_mixers);
 

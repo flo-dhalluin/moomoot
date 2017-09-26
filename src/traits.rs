@@ -37,8 +37,3 @@ impl Sum for SoundSample {
         iter.fold(SoundSample::Done, |a, b| a + b)
     }
 }
-
-pub enum ParamValue {
-    Constant(f64),
-    BusValue(String),
-}

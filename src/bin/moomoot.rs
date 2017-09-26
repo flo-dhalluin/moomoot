@@ -1,11 +1,11 @@
 extern crate moomoot;
 
 use moomoot::MooMoot;
-use moomoot::synth::string::KarplusStrong;
+use moomoot::synth::string::{KarplusStrong, KarplusStrongParams};
 use moomoot::synth::noise::WhiteNoise;
-use moomoot::synth::sine::Sine;
+use moomoot::synth::sine::{Sine, SineParams};
 use moomoot::ParamValue;
-use moomoot::efx::volume::Volume;
+use moomoot::efx::volume::{Volume, VolumeParams};
 use std::{time, thread};
 
 
@@ -18,29 +18,20 @@ fn main() {
     let noise = m.add_mixer(&root, "noiz");
 
     // white noise beeing parameter less ..
-    m.add_synth::<WhiteNoise>(&noise, Vec::new());
-    m.add_efx::<Volume>(
-        &noise,
-        vec![("volume".to_string(), ParamValue::Constant(0.1))],
-    );
+    m.add_synth(&noise, WhiteNoise::new());
+    m.add_efx(&noise, Volume::new(VolumeParams::default().volume(0.1)));
 
     let mut note: f64 = 1.0;
     let mut random: u64 = 852;
-    let frequency_p = "frequency".to_string();
-    m.add_synth::<Sine>(
-        &blah,
-        vec![
-            (frequency_p, ParamValue::BusValue("freq".to_string())),
-            ("amplitude".to_string(), ParamValue::Constant(0.4)),
-        ],
-    );
+
+    m.add_synth(&blah, Sine::new(SineParams::default()
+        .frequency("freq")
+        .amplitude(0.4)));
 
     loop {
 
-        m.add_synth::<KarplusStrong>(
-            &blah,
-            vec![("base_freq".to_string(), ParamValue::Constant(note * 75.0))],
-        );
+        m.add_synth(&blah, KarplusStrong::new(KarplusStrongParams::default()
+                                .base_freq(note * 75.0)));
 
         m.set_bus_value("freq", note * 50.0);
 

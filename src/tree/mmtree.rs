@@ -1,6 +1,7 @@
 
 use tree::mixer::Mixer;
 use traits::*;
+use params::ParamValue;
 use super::bus::BusSystem;
 use synth::Synth;
 use efx::Efx;
@@ -50,11 +51,10 @@ impl MMTree {
     pub fn add_synth(
         &mut self,
         mixer_id: &str,
-        mut synth: Box<Synth>,
-        params: Vec<(String, ParamValue)>,
+        mut synth: Box<Synth>
     ) -> Result<(), &str> {
 
-        params::init_parametrized(synth.as_mut(), &mut self.buses, params);
+        synth.as_mut().connect_parameters(&mut self.buses);
 
         if let Some(mxr) = self.root_mixer.find_mixer(mixer_id) {
             mxr.add_synth(synth);
@@ -73,11 +73,10 @@ impl MMTree {
     pub fn add_efx(
         &mut self,
         mixer_id: &str,
-        mut fx: Box<Efx>,
-        params: Vec<(String, ParamValue)>,
+        mut fx: Box<Efx>
     ) -> Result<(), &str> {
 
-        params::init_parametrized(fx.as_mut(), &mut self.buses, params);
+        fx.as_mut().connect_parameters(&mut self.buses);
 
         if let Some(mxr) = self.root_mixer.find_mixer(mixer_id) {
             mxr.add_efx(fx);

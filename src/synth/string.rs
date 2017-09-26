@@ -4,7 +4,7 @@ use std::f64::consts::PI;
 use synth::noise::WhiteNoise;
 use Synth;
 use SoundSample;
-use params::{SynthParam, SynthParams, Parametrized};
+use params::*;
 
 // Karplus-Strong alg.
 // https://en.wikipedia.org/wiki/Karplus%E2%80%93Strong_string_synthesis
@@ -52,26 +52,7 @@ impl From<Vec<f64>> for FixedRingBuffer {
     }
 }
 
-struct KarplusStrongParams {
-    cutoff_freq: SynthParam,
-    base_freq: SynthParam,
-    feedback_gain: SynthParam, // sustain 1 = inifinite ..
-}
-
-impl SynthParams for KarplusStrongParams {
-    fn list_params(&self) -> Vec<&str> {
-        vec!["cutoff_freq", "base_freq", "feedback_gain"]
-    }
-
-    fn set_param_value(&mut self, param_id: &str, value: SynthParam) {
-        match param_id {
-            "cutoff_freq" => self.cutoff_freq = value,
-            "base_freq" => self.base_freq = value,
-            "feedback_gain" => self.feedback_gain = value,
-            _ => {}
-        }
-    }
-}
+declare_params!(KarplusStrongParams { cutoff_freq: 6000.0, base_freq: 440.0, feedback_gain: 0.999});
 
 pub struct KarplusStrong {
     params: KarplusStrongParams,
@@ -88,6 +69,18 @@ impl KarplusStrong {
     // frame_t : because we need the goddam sampling rate ..
     // cutoff_freq :
     // sustain : gain of the feedback 0 : non sustain - 1: inifinte
+    pub fn new(params: KarplusStrongParams) -> KarplusStrong {
+        KarplusStrong {
+            params: params,
+            time: 0.,
+            frame_t: 0.,
+            last_feedback: 0.,
+            energy: 1.,
+            delay_line: FixedRingBuffer::from(Vec::new()),
+            noise_synt: WhiteNoise::new(),
+        }
+
+    }
 
     fn update_delay_line(&mut self) -> usize {
         let line_len_f = (1. / (self.params.base_freq.value() * self.frame_t));
@@ -101,29 +94,15 @@ impl KarplusStrong {
 }
 
 impl Parametrized for KarplusStrong {
-    fn get_params(&mut self) -> &mut SynthParams {
+    fn get_parameters(&mut self) -> &mut Parameters {
         &mut self.params
     }
 }
 
 impl Synth for KarplusStrong {
-    fn new(frame_t: f64) -> KarplusStrong {
-
-        let params = KarplusStrongParams {
-            cutoff_freq: SynthParam::DefaultValue(6000.0),
-            base_freq: SynthParam::DefaultValue(440.0),
-            feedback_gain: SynthParam::DefaultValue(0.999),
-        };
-
-        KarplusStrong {
-            params: params,
-            time: 0.,
-            frame_t: frame_t,
-            last_feedback: 0.,
-            energy: 1.,
-            delay_line: FixedRingBuffer::from(Vec::new()),
-            noise_synt: WhiteNoise::new(frame_t),
-        }
+    fn init(&mut self, frame_t: f64) {
+        self.frame_t = frame_t;
+        self.update_delay_line();
     }
 
     fn sample(&mut self) -> SoundSample {
