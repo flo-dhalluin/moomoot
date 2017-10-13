@@ -1,6 +1,6 @@
 use super::mmtree;
 use super::mixer;
-use super::bus::{Bus, Receiver, BusSystem};
+
 use traits::*;
 use params::*;
 use synth::Synth;
@@ -145,68 +145,6 @@ fn transient_mixers() {
     assert_eq!(tree.mixer_count(), 2);
 }
 
-struct ThemSubsc {
-    r: Receiver<f64>,
-}
-
-
-impl ThemSubsc {
-    fn new(bus: &mut Bus<f64>) -> ThemSubsc {
-        ThemSubsc { r: bus.sub() }
-    }
-
-    fn yo(&self) -> f64 {
-        self.r.value()
-    }
-}
-
-#[test]
-fn test_bus() {
-    let mut bus = Bus::new("bus", 0.0);
-    let tsuone = ThemSubsc::new(&mut bus);
-    {
-        let tsu = ThemSubsc::new(&mut bus);
-        assert_eq!(tsu.yo(), 0.0);
-        bus.publish(42.0);
-        assert_eq!(tsu.yo(), 42.0);
-        assert_eq!(tsuone.yo(), 42.0);
-        assert_eq!(bus.subscriber_count(), 2);
-    }
-    bus.publish(2.);
-    assert_eq!(tsuone.yo(), 2.0);
-    assert_eq!(bus.subscriber_count(), 1);
-}
-
-struct Stuff {
-    a: Receiver<f64>,
-    b: Receiver<f64>,
-}
-
-
-impl Stuff {
-    fn doit(&self) -> f64 {
-        self.a.value() + self.b.value()
-    }
-}
-
-#[test]
-fn test_bus_system() {
-
-    let mut bus = BusSystem::new();
-
-    let stuff = Stuff {
-        a: bus.sub("a"),
-        b: bus.sub("b"),
-    };
-
-    bus.publish("a", 2.0);
-    bus.publish("b", 4.0);
-
-    assert_eq!(stuff.doit(), 6.0);
-
-    assert!(bus.publish("b", 5.0).is_ok());
-    assert!(bus.publish("d", 5.0).is_err());
-}
 
 declare_params!(CstSynthParams {value: 1.});
 

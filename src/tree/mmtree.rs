@@ -2,7 +2,7 @@
 use tree::mixer::Mixer;
 use traits::*;
 use params::ParamValue;
-use super::bus::BusSystem;
+use super::pbus::BusSystem;
 use synth::Synth;
 use efx::Efx;
 use params;

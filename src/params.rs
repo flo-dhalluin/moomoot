@@ -1,16 +1,16 @@
-use tree::bus;
+use tree::pbus;
 use std::fmt;
 use std::cmp;
 
-impl<T> fmt::Debug for bus::Receiver<T> {
+impl<T> fmt::Debug for pbus::Reader<T> {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         write!(f, "Bus::Receiver_xxx")
     }
 }
 
 // dummy partial Eq implemenation so we can have tests
-impl<T> cmp::PartialEq for bus::Receiver<T> {
-    fn eq(&self, other: &bus::Receiver<T>) -> bool {
+impl<T> cmp::PartialEq for pbus::Reader<T> {
+    fn eq(&self, other: &pbus::Reader<T>) -> bool {
         false
     }
 }
@@ -18,7 +18,7 @@ impl<T> cmp::PartialEq for bus::Receiver<T> {
 #[derive(Debug, PartialEq)]
 pub enum BusParam {
     NotConnected(String),
-    Connected(bus::Receiver<f64>)
+    Connected(pbus::Reader<f64>)
 }
 
 /// Parameters from the client side.
@@ -37,7 +37,7 @@ impl ParamValue {
         ParamValue::Default(v)
     }
 
-    fn connect(&mut self, buses: &mut bus::BusSystem) {
+    fn connect(&mut self, buses: &mut pbus::BusSystem) {
         let recvr = { if let ParamValue::BusValue(BusParam::NotConnected(ref busid)) = *self {
             Some(buses.sub(&busid))
         } else {
@@ -142,7 +142,7 @@ pub trait Parametrized {
     }
 
     /// connects bus parameters to
-    fn connect_parameters(&mut self, buses: &mut bus::BusSystem) {
+    fn connect_parameters(&mut self, buses: &mut pbus::BusSystem) {
         for p in self.get_parameters().map_parameters() {
             p.connect(buses);
         }
@@ -186,7 +186,7 @@ mod tests {
         let c = Chombier::default();
         assert_eq!(c.tic(), 119.0);
 
-        let mut bus = bus::BusSystem::new();
+        let mut bus = pbus::BusSystem::new();
         let mut cc = Chombier(SomeParams::default().a(2.0).b("bite"));
         cc.connect_parameters(&mut bus);
         bus.publish("bite", 2.0);

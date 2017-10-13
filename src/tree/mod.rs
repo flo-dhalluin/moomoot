@@ -1,6 +1,6 @@
 pub mod mmtree;
 mod mixer;
-pub mod bus;
+pub mod pbus;
 
 #[cfg(test)]
 mod tests;
