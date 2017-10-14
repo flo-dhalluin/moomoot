@@ -20,7 +20,7 @@ enum InternalCmd {
 
 // RT process callback
 struct InternalProcess {
-    out_port: j::Port<j::AudioOutSpec>,
+    ports: (j::Port<j::AudioOutSpec>, j::Port<j::AudioOutSpec>), // (R,L) jack ports
     rx: Receiver<InternalCmd>,
     synth_tree: MMTree,
 }
@@ -28,12 +28,16 @@ struct InternalProcess {
 impl InternalProcess {
     // need lifetimes here so that we know that the borrow is released
     fn new(client: &j::Client) -> (Sender<InternalCmd>, InternalProcess) {
-        let port = client
-            .register_port("moomoot1", j::AudioOutSpec::default())
+        let port_right = client
+            .register_port("moomoot_r", j::AudioOutSpec::default())
             .unwrap();
+        let port_left = client
+            .register_port("moomoot_l", j::AudioOutSpec::default())
+            .unwrap();
+
         let (sx, rx) = channel();
         let m = InternalProcess {
-            out_port: port,
+            ports: (port_right, port_left),
             rx: rx,
             synth_tree: MMTree::new(),
         };
@@ -60,18 +64,27 @@ impl j::ProcessHandler for InternalProcess {
         }
 
         // Get output buffer
-        let port = &mut self.out_port;
-        let mut out_p = j::AudioOutPort::new(port, ps);
-        let out: &mut [f32] = &mut out_p;
+        let mut out_right = j::AudioOutPort::new(&mut self.ports.0, ps);
+        let mut out_left = j::AudioOutPort::new(&mut self.ports.1, ps);
+
+        let out_r: &mut [f32] = &mut out_right;
+        let out_l: &mut [f32] = &mut out_left;
 
         // Write output
-        for v in out.iter_mut() {
+        for (v_r, v_l) in out_r.iter_mut().zip(out_l.iter_mut()) {
             match self.synth_tree.sample() {
-                SoundSample::Sample(s) => {
-                    *v = s as f32;
+                SoundSample::Sample(sample) => {
+                    match sample {
+                        SampleValue::Mono(s) => *v_r = s as f32,
+                        SampleValue::Stereo(r, l) => {
+                            *v_r = r as f32;
+                            *v_l = l as f32;
+                        }
+                    }
                 }
                 _ => {
-                    *v = 0.;
+                    *v_r = 0.;
+                    *v_l = 0.;
                 }
             }
         }

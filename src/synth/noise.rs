@@ -4,6 +4,7 @@ extern crate rand;
 use self::rand::distributions::{Range, IndependentSample};
 use Synth;
 use SoundSample;
+use traits::mono_value;
 use params::*;
 
 pub struct WhiteNoise {
@@ -23,6 +24,6 @@ impl Synth for WhiteNoise {
 
     fn sample(&mut self) -> SoundSample {
         let between = Range::new(-1f64, 1.);
-        SoundSample::Sample(between.ind_sample(&mut self.rng))
+        mono_value(between.ind_sample(&mut self.rng))
     }
 }

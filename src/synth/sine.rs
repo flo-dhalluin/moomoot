@@ -1,6 +1,8 @@
 use super::Synth;
 use params::*;
+use traits::mono_value;
 use SoundSample;
+
 use std::f64::consts::PI;
 
 
@@ -37,6 +39,6 @@ impl Synth for Sine {
     fn sample(&mut self) -> SoundSample {
         let x = self.params.frequency.value() * self.time * 2.0 * PI;
         self.time += self.frame_t;
-        SoundSample::Sample(x.sin() * self.params.amplitude.value())
+        mono_value(x.sin() * self.params.amplitude.value())
     }
 }

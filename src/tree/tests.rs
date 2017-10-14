@@ -37,7 +37,7 @@ impl CstSynth {
 impl Synth for CstSynth {
 
     fn sample(&mut self) -> SoundSample {
-        SoundSample::Sample(self.value)
+        mono_value(self.value)
     }
 }
 
@@ -53,7 +53,7 @@ fn mixer_sample() {
     mixer.add_synth(Box::new(CstSynth::new(3.0)));
 
 
-    assert_eq!(mixer.sample(), SoundSample::Sample(4.));
+    assert_eq!(mixer.sample(), mono_value(4.));
 }
 
 #[test]
@@ -63,7 +63,7 @@ fn mixer_efx() {
     let mut v = Box::new(Volume::new(VolumeParams::default().volume(0.6)));
     mixer.add_efx(v);
 
-    assert_eq!(mixer.sample(), SoundSample::Sample(0.6));
+    assert_eq!(mixer.sample(), mono_value(0.6));
 }
 
 #[test]
@@ -79,13 +79,13 @@ fn mixer_cascade() {
 
     t.add_synth("mixer1", Box::new(CstSynth::new(0.1)));
     t.add_synth("mixer2", Box::new(CstSynth::new(0.3)));
-    assert_eq!(t.sample(), SoundSample::Sample(0.4));
+    assert_eq!(t.sample(), mono_value(0.4));
 
     t.add_efx(
         "mixer2",
         Box::new(Volume::new(VolumeParams::default().volume(0.5)))
     ); // 0.5
-    assert_eq!(t.sample(), SoundSample::Sample(0.25));
+    assert_eq!(t.sample(), mono_value(0.25));
 }
 
 struct ShittyEnvelope {
@@ -106,7 +106,7 @@ impl ShittyEnvelope {
 
 impl Efx for ShittyEnvelope {
 
-    fn sample(&mut self, sample: f64) -> SoundSample {
+    fn sample(&mut self, sample: SampleValue) -> SoundSample {
         if self.tic < self.nb_samples {
             self.tic += 1;
             SoundSample::Sample(sample)
@@ -139,7 +139,7 @@ fn transient_mixers() {
     assert_eq!(tree.mixer_count(), 3);
 
     for i in 0..3 {
-        assert_eq!(tree.sample(), SoundSample::Sample(0.42));
+        assert_eq!(tree.sample(), mono_value(0.42));
     }
     assert_eq!(tree.sample(), SoundSample::Silence);
     assert_eq!(tree.mixer_count(), 2);
@@ -166,7 +166,7 @@ impl Parametrized for CstSynthWithP {
 
 impl Synth for CstSynthWithP {
     fn sample(&mut self) -> SoundSample {
-        SoundSample::Sample(self.params.value.value())
+        mono_value(self.params.value.value())
     }
 }
 
@@ -175,22 +175,22 @@ fn synth_with_params() {
     let mut tree = mmtree::MMTree::new();
     tree.add_synth("root", Box::new(CstSynthWithP::new(CstSynthParams::default())));
 
-    assert_eq!(tree.sample(), SoundSample::Sample(1.));
+    assert_eq!(tree.sample(), mono_value(1.));
 
     tree.add_synth(
         "root",
         Box::new(CstSynthWithP::new(CstSynthParams::default().value(0.44))));
 
-    assert_eq!(tree.sample(), SoundSample::Sample(1.44));
+    assert_eq!(tree.sample(), mono_value(1.44));
 
     tree.add_synth(
         "root",
         Box::new(CstSynthWithP::new(CstSynthParams::default().value("chombier"))));
 
     tree.set_bus_value("chombier", 1.0);
-    assert_eq!(tree.sample(), SoundSample::Sample(2.44));
+    assert_eq!(tree.sample(), mono_value(2.44));
     tree.set_bus_value("chombier", 0.33);
-    assert_eq!(tree.sample(), SoundSample::Sample(1.77));
+    assert_eq!(tree.sample(), mono_value(1.77));
 
 
 }

@@ -3,6 +3,8 @@ use std::mem;
 use std::f64::consts::PI;
 use synth::noise::WhiteNoise;
 use Synth;
+use traits::mono_value;
+use traits::SampleValue;
 use SoundSample;
 use params::*;
 
@@ -110,8 +112,10 @@ impl Synth for KarplusStrong {
         {
             let period = self.update_delay_line();
             if self.time < (period as f64) * self.frame_t {
-                if let SoundSample::Sample(n) = self.noise_synt.sample() {
-                    current_sample += n;
+                if let SoundSample::Sample(smp) = self.noise_synt.sample() {
+                    if let SampleValue::Mono(n) = smp {
+                        current_sample += n;
+                    }
                 }
             } else {
                 if (self.energy < 1e-9) {
@@ -138,6 +142,6 @@ impl Synth for KarplusStrong {
         let sq = self.last_feedback * self.last_feedback;
         self.energy = 0.95 * self.energy + 0.05 * sq;
 
-        SoundSample::Sample(res)
+        mono_value(res)
     }
 }

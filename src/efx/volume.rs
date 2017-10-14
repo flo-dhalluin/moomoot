@@ -1,4 +1,4 @@
-use traits::SoundSample;
+use traits::{SoundSample, SampleValue, mono_value, stereo_value};
 use params::*;
 use super::Efx;
 
@@ -25,7 +25,11 @@ impl Volume {
 impl Efx for Volume {
 
 
-    fn sample(&mut self, sample: f64) -> SoundSample {
-        SoundSample::Sample(self.params.volume.value() * sample)
+    fn sample(&mut self, sample: SampleValue) -> SoundSample {
+        match sample {
+            SampleValue::Mono(x) => mono_value(self.params.volume.value() * x),
+            SampleValue::Stereo(r, l) => stereo_value(self.params.volume.value() * r,
+                                         self.params.volume.value() * l)
+        }
     }
 }
