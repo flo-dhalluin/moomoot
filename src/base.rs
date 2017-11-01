@@ -98,7 +98,16 @@ impl j::ProcessHandler for InternalProcess {
 pub struct MixerH(String);
 
 
-/// The MooMooT server object.
+/// The MooMooT Synthetizer object.
+/// # Example
+/// ```
+/// use moomoot::synth::sine::{Sine, SineParams};
+///  // requires a running jack daemon
+/// let mut moomoot = moomoot::MooMoot::start();
+/// let root_mixer = moomoot.root_mixer();
+///  // add a 440 Hz perfect sine to the root mixer.
+/// moomoot.add_synth(&root_mixer, Sine::new(SineParams::default().frequency(440.0)));
+/// ```
 pub struct MooMoot {
     async_client: j::AsyncClient<(), InternalProcess>,
     sample_rate: f64,
@@ -124,6 +133,10 @@ impl MooMoot {
             send_channel: cmd_chan,
         }
     }
+    /// Disconnect from Jack
+    pub fn kill(self) {
+        self.async_client.deactivate().unwrap();
+    }
 
     /// get an handle to the "root" mixer
     pub fn root_mixer(&self) -> MixerH {
@@ -148,7 +161,7 @@ impl MooMoot {
             .expect("can't send command to MooMoot (RT process stopped)");
     }
 
-    /// add an effect to them mixer
+    /// add an effect to a mixer
     pub fn add_efx<T: Efx + 'static>(&mut self, mixer: &MixerH, mut efx: T) {
         efx.init(1. / self.sample_rate);
         self.send_channel
@@ -156,6 +169,7 @@ impl MooMoot {
             .expect("can't send command to MooMoot (RT process stopped)");
     }
 
+    /// set a new parameter value in the bus system
     pub fn set_bus_value(&mut self, bus: &str, value: f64) {
         self.send_channel
             .send(InternalCmd::SetBusValue(bus.to_string(), value))

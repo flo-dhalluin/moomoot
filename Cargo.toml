@@ -1,7 +1,10 @@
 [package]
 name = "moomoot"
 version = "0.1.0"
+license = "Apache-2.0"
 authors = ["Florent D'halluin <flal@melix.net>"]
+description = "modular sound synthesizer"
+repository = "https://github.com/flo-dhalluin/moomoot"
 
 [dependencies]
 jack = "0.5.0"

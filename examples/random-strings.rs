@@ -4,7 +4,6 @@ use moomoot::MooMoot;
 use moomoot::synth::string::{KarplusStrong, KarplusStrongParams};
 use moomoot::synth::noise::WhiteNoise;
 use moomoot::synth::sine::{Sine, SineParams};
-use moomoot::ParamValue;
 use moomoot::efx::volume::{Volume, VolumeParams};
 use moomoot::efx::pan::{Pan, PanParams};
 use std::{time, thread};

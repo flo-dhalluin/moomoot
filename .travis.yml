@@ -6,7 +6,10 @@ rust:
 matrix:
   allow_failures:
     - rust: nightly
+before_script:
+  - jackd -r -d dummy &
 addons:
   apt:
     packages:
+      - jackd
       - libjack-jackd2-dev

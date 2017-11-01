@@ -2,9 +2,13 @@ use std::ops::Add;
 use std::iter::Sum;
 
 #[derive(Debug, PartialEq)]
-/// wraps actual sampled values : handle mono/stereo stuff
+/// A non silence sound frame. could be Mono, or Stereo
+///
+/// MooMooT sample are *always* f64 (even if the underlying JACK engine takes floats)
 pub enum SampleValue {
-    Stereo(f64, f64), // (left / right )
+    /// Stereo (right , left)
+    Stereo(f64, f64),
+    /// Mono
     Mono(f64),
 }
 
@@ -30,15 +34,21 @@ impl Add for SampleValue {
     }
 }
 
-/// output for a synth either a sample, or silence
-/// (done trigger autoremove from the tree )
+/// A frame value. Can be an actual sound frame, or silence
+///
+/// There is two kind of silence : `Silence` and `Done`. When a `Synth` or `Efx`
+/// Outputs `Done` it is signal that it should be removed from the synthesis tree
 #[derive(Debug, PartialEq)]
 pub enum SoundSample {
+    /// A sound frame
     Sample(SampleValue),
-    Silence, // no output
-    Done, // this sound is done. kill me.
+    /// Silence
+    Silence,
+    /// Flag for removal
+    Done,
 }
 
+/// Sample are summable for mixers.
 impl Add for SoundSample {
     type Output = SoundSample;
 
@@ -67,10 +77,12 @@ impl Sum for SoundSample {
     }
 }
 
+/// Creates a Mono sound frame
 pub fn mono_value(v: f64) -> SoundSample {
     SoundSample::Sample(SampleValue::Mono(v))
 }
 
+/// Create a stereo sound frame
 pub fn stereo_value(right: f64, left: f64) -> SoundSample {
     SoundSample::Sample(SampleValue::Stereo(right, left))
 }

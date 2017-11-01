@@ -2,7 +2,7 @@
 use std::mem;
 use std::f64::consts::PI;
 use synth::noise::WhiteNoise;
-use Synth;
+use synth::Synth;
 use traits::mono_value;
 use traits::SampleValue;
 use SoundSample;
@@ -55,6 +55,10 @@ impl From<Vec<f64>> for FixedRingBuffer {
 }
 
 declare_params!(KarplusStrongParams { cutoff_freq: 6000.0, base_freq: 440.0, feedback_gain: 0.999});
+
+/// "plucked" string synthetiser
+///
+/// internally uses (Karplus-Strong)[https://en.wikipedia.org/wiki/Karplus%E2%80%93Strong_string_synthesis]
 
 pub struct KarplusStrong {
     params: KarplusStrongParams,

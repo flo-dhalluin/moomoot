@@ -2,11 +2,12 @@
 
 extern crate rand;
 use self::rand::distributions::{Range, IndependentSample};
-use Synth;
+use synth::Synth;
 use SoundSample;
 use traits::mono_value;
 use params::*;
 
+/// white noise synth
 pub struct WhiteNoise {
     rng: rand::XorShiftRng,
 }
