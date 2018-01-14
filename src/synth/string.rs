@@ -1,64 +1,21 @@
-
-use std::mem;
 use std::f64::consts::PI;
 use synth::noise::WhiteNoise;
 use synth::Synth;
+use utils::ringbuffer::FixedRingBuffer;
 use traits::mono_value;
 use traits::SampleValue;
 use SoundSample;
 use params::*;
 
-// Karplus-Strong alg.
-// https://en.wikipedia.org/wiki/Karplus%E2%80%93Strong_string_synthesis
-
-// WhiteNoise  ->  +  ->  ->
-//                 |      |
-//                 LP  <- delay
-
-
-// for the delay line ..
-struct FixedRingBuffer {
-    queue: Box<[f64]>,
-    idx: usize, // index of last input ( so output is right behind)
-}
-
-
-impl FixedRingBuffer {
-    #[inline]
-    pub fn len(&self) -> usize {
-        self.queue.len()
-    }
-
-    // actually queue and dequeue ..
-    pub fn queue(&mut self, elem: &mut f64) {
-        let len = self.len();
-        self.idx = (self.idx + len - 1) % len;
-        //println!(" queue idx : {} / {} <= {}", self.idx, len, elem);
-        mem::swap(unsafe { self.queue.get_unchecked_mut(self.idx) }, elem);
-    }
-
-    pub fn set_all(&mut self, elem: f64) {
-        for e in self.queue.iter_mut() {
-            *e = elem;
-        }
-    }
-}
-
-impl From<Vec<f64>> for FixedRingBuffer {
-    fn from(vec: Vec<f64>) -> Self {
-        debug_assert!(vec.len() > 0);
-        FixedRingBuffer {
-            queue: vec.into_boxed_slice(),
-            idx: 0,
-        }
-    }
-}
 
 declare_params!(KarplusStrongParams { cutoff_freq: 6000.0, base_freq: 440.0, feedback_gain: 0.999});
 
-/// "plucked" string synthetiser
-///
-/// internally uses (Karplus-Strong)[https://en.wikipedia.org/wiki/Karplus%E2%80%93Strong_string_synthesis]
+/// Karplus-Strong alg. for "plucked string" sound synthesis
+/// https://en.wikipedia.org/wiki/Karplus%E2%80%93Strong_string_synthesis
+
+// WhiteNoise  ->  +  ->  ->
+//                 |      |
+//                 LP  <- delay ( one period of fundamental note)
 
 pub struct KarplusStrong {
     params: KarplusStrongParams,
@@ -89,7 +46,7 @@ impl KarplusStrong {
     }
 
     fn update_delay_line(&mut self) -> usize {
-        let line_len_f = (1. / (self.params.base_freq.value() * self.frame_t));
+        let line_len_f = 1. / (self.params.base_freq.value() * self.frame_t);
         let line_len = line_len_f as usize + 1;
         if line_len != self.delay_line.len() {
             self.delay_line = FixedRingBuffer::from(vec![0.; line_len]);
@@ -122,7 +79,7 @@ impl Synth for KarplusStrong {
                     }
                 }
             } else {
-                if (self.energy < 1e-9) {
+                if self.energy < 1e-9 {
                     return SoundSample::Done;
                 }
             }

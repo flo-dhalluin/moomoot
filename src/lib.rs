@@ -31,6 +31,7 @@ mod params;
 pub mod synth;
 pub mod efx;
 mod tree;
+mod utils;
 
 pub use base::MooMoot;
 pub use traits::SoundSample;

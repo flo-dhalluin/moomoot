@@ -10,7 +10,7 @@ impl<T> fmt::Debug for pbus::Reader<T> {
 
 // dummy partial Eq implemenation so we can have tests
 impl<T> cmp::PartialEq for pbus::Reader<T> {
-    fn eq(&self, other: &pbus::Reader<T>) -> bool {
+    fn eq(&self, _: &pbus::Reader<T>) -> bool {
         false
     }
 }

@@ -191,6 +191,36 @@ fn synth_with_params() {
     assert_eq!(tree.sample(), mono_value(2.44));
     tree.set_bus_value("chombier", 0.33);
     assert_eq!(tree.sample(), mono_value(1.77));
+}
 
+/*
+#[bench]
+fn benchmark_synth_tree(b: &mut test::Bencher) {
+
+    use efx::volume::{Volume, VolumeParams};
+    use synth::sine::{Sine, SineParams};
+
+    let mut tree = mmtree::MMTree::new();
+
+    tree.add_synth("root", Box::new(Sine::new(SineParams::default())));
+
+    for i in 1..10 {
+        let m_id = format!("level_1_{}", i);
+        tree.add_mixer("root", &m_id);
+        for j in 1..5 {
+            tree.add_synth(&m_id, Box::new(Sine::new(SineParams::default().frequency("f"))));
+        }
+
+        tree.add_efx(&m_id, Box::new(Volume::new(VolumeParams::default())));
+    }
+
+    tree.set_bus_value("f", 0.5);
+
+    b.iter(|| {
+        for s in 1..100 {
+            tree.sample();
+        }
+    });
 
 }
+*/

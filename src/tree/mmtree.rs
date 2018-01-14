@@ -1,13 +1,10 @@
 
 use tree::mixer::Mixer;
 use traits::*;
-use params::ParamValue;
 use super::pbus::BusSystem;
 use synth::Synth;
 use efx::Efx;
-use params;
 use uuid::Uuid;
-use std::error::Error;
 
 pub struct MMTree {
     root_mixer: Box<Mixer>,
