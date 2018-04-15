@@ -20,6 +20,7 @@ limitations under the License.
 //! where leaves are indiviual "unit" synthesiser that gets mixed and applied effects
 //! down the tree. Each effect or unit synthesiser's parameters can get changed in real
 //! time via an internal parameter bus system.
+#![feature(test)]
 
 extern crate uuid;
 extern crate jack;

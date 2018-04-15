@@ -193,34 +193,55 @@ fn synth_with_params() {
     assert_eq!(tree.sample(), mono_value(1.77));
 }
 
-/*
-#[bench]
-fn benchmark_synth_tree(b: &mut test::Bencher) {
+// will only compile on nightly ( bench unstable )
+mod benches {
+    extern crate test;
+    use super::*;
 
-    use efx::volume::{Volume, VolumeParams};
-    use synth::sine::{Sine, SineParams};
+    // benchmark sample generation.
+    // baseline : @ 44kHz you have 20 us / sample
+    #[bench]
+    fn benchmark_synth_tree(b: &mut test::Bencher) {
 
-    let mut tree = mmtree::MMTree::new();
+        use efx::volume::{Volume, VolumeParams};
+        use synth::sine::{Sine, SineParams};
 
-    tree.add_synth("root", Box::new(Sine::new(SineParams::default())));
+        const TREE_DEPTH : usize = 4;
+        const TREE_WIDTH : usize = 5;
 
-    for i in 1..10 {
-        let m_id = format!("level_1_{}", i);
-        tree.add_mixer("root", &m_id);
-        for j in 1..5 {
-            tree.add_synth(&m_id, Box::new(Sine::new(SineParams::default().frequency("f"))));
+        let mut tree = mmtree::MMTree::new();
+
+        tree.add_synth("root", Box::new(Sine::new(SineParams::default())));
+
+        let mut stack = Vec::new();
+        stack.push((String::from("root"), 0));
+
+        while ! stack.is_empty() {
+
+            let (parent_id, level) = stack.pop().unwrap();
+
+            if level < TREE_DEPTH {
+                for j in 1..TREE_WIDTH {
+                    let new_id = format!("{}_{}", parent_id, j);
+                    tree.add_mixer(&parent_id, &new_id);
+                    stack.push((new_id, level + 1));
+                }
+            }
+            for j in 1..TREE_WIDTH {
+                let synth = Box::new(Sine::new(SineParams::default().frequency("f")));
+                tree.add_synth(&parent_id, synth);
+            }
+
         }
 
-        tree.add_efx(&m_id, Box::new(Volume::new(VolumeParams::default())));
-    }
+        tree.set_bus_value("f", 0.5);
 
-    tree.set_bus_value("f", 0.5);
-
-    b.iter(|| {
-        for s in 1..100 {
+        b.iter(|| {
+            tree.set_bus_value("f", 0.6);
             tree.sample();
-        }
-    });
+            tree.set_bus_value("f", 0.3);
+            tree.sample();
+        });
 
+    }
 }
-*/
