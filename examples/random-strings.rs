@@ -27,17 +27,20 @@ fn main() {
     let mut note: f64 = 1.0;
     let mut random: u64 = 852;
 
-    m.add_synth(&blah, Sine::new(SineParams::default()
-        .frequency("freq")
-        .amplitude(0.4)));
+    m.add_synth(
+        &blah,
+        Sine::new(SineParams::default().frequency("freq").amplitude(0.4)),
+    );
 
     loop {
 
-        m.add_synth(&blah, KarplusStrong::new(KarplusStrongParams::default()
-                                .base_freq(note * 75.0)));
+        m.add_synth(
+            &blah,
+            KarplusStrong::new(KarplusStrongParams::default().base_freq(note * 75.0)),
+        );
 
         m.set_bus_value("freq", note * 50.0);
-        m.set_bus_value("noize_pan", 0.5 + note.cos()*0.5);
+        m.set_bus_value("noize_pan", 0.5 + note.cos() * 0.5);
 
         thread::sleep(time::Duration::from_millis(250 + random));
 

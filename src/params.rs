@@ -18,7 +18,7 @@ impl<T> cmp::PartialEq for pbus::Reader<T> {
 #[derive(Debug, PartialEq)]
 pub enum BusParam {
     NotConnected(String),
-    Connected(pbus::Reader<f64>)
+    Connected(pbus::Reader<f64>),
 }
 
 /// Parameters from the client side.
@@ -38,12 +38,13 @@ impl ParamValue {
     }
 
     fn connect(&mut self, buses: &mut pbus::BusSystem) {
-        let recvr = { if let ParamValue::BusValue(BusParam::NotConnected(ref busid)) = *self {
-            Some(buses.sub(&busid))
-        } else {
-            None
-        }
-    };
+        let recvr = {
+            if let ParamValue::BusValue(BusParam::NotConnected(ref busid)) = *self {
+                Some(buses.sub(&busid))
+            } else {
+                None
+            }
+        };
 
         if recvr.is_some() {
             *self = ParamValue::BusValue(BusParam::Connected(recvr.unwrap()));
@@ -91,7 +92,7 @@ impl Parameters for NoParameters {
 }
 
 macro_rules! declare_params {
-    ($name:ident {$($p:ident : $v:expr),* }) => {
+    ($name:ident {$($p:ident : $v:expr),*}) => {
 
     #[derive(Debug)]
     pub struct $name {
@@ -133,10 +134,9 @@ macro_rules! declare_params {
     }
 }}
 
-static mut NO_PARAMETERS: NoParameters = NoParameters{};
+static mut NO_PARAMETERS: NoParameters = NoParameters {};
 
 pub trait Parametrized {
-
     fn get_parameters(&mut self) -> &mut Parameters {
         unsafe { &mut NO_PARAMETERS }
     }
@@ -151,10 +151,9 @@ pub trait Parametrized {
 
 #[cfg(test)]
 mod tests {
-    #[macro_use]
     use super::*;
 
-    declare_params!(SomeParams {a : 42.0, b : 77.0});
+    declare_params!(SomeParams { a: 42.0, b: 77.0 });
 
     #[derive(Default)]
     struct Chombier(SomeParams);
@@ -189,9 +188,9 @@ mod tests {
         let mut bus = pbus::BusSystem::new();
         let mut cc = Chombier(SomeParams::default().a(2.0).b("bite"));
         cc.connect_parameters(&mut bus);
-        bus.publish("bite", 2.0);
+        bus.publish("bite", 2.0).unwrap();
         assert_eq!(cc.tic(), 4.0);
-        bus.publish("bite", 4.0);
+        bus.publish("bite", 4.0).unwrap();
         assert_eq!(cc.tic(), 6.0);
 
 

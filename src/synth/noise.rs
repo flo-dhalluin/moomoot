@@ -18,11 +18,9 @@ impl WhiteNoise {
     }
 }
 
-impl Parametrized for WhiteNoise {
-}
+impl Parametrized for WhiteNoise {}
 
 impl Synth for WhiteNoise {
-
     fn sample(&mut self) -> SoundSample {
         let between = Range::new(-1f64, 1.);
         mono_value(between.ind_sample(&mut self.rng))

@@ -46,7 +46,7 @@ impl BusSystem {
 
         self.busses
             .entry(chan.to_string())
-            .or_insert(bus::Bus::new( 0.0))
+            .or_insert(bus::Bus::new(0.0))
             .subscribe()
     }
 

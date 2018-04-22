@@ -3,7 +3,7 @@ use params::*;
 use super::Efx;
 
 
-declare_params!(VolumeParams {volume: 1.0});
+declare_params!(VolumeParams { volume: 1.0 });
 
 pub struct Volume {
     params: VolumeParams,
@@ -17,19 +17,21 @@ impl Parametrized for Volume {
 
 
 impl Volume {
-    pub fn new(params : VolumeParams) -> Volume {
-        Volume{params: params}
+    pub fn new(params: VolumeParams) -> Volume {
+        Volume { params: params }
     }
 }
 
 impl Efx for Volume {
-
-
     fn sample(&mut self, sample: SampleValue) -> SoundSample {
         match sample {
             SampleValue::Mono(x) => mono_value(self.params.volume.value() * x),
-            SampleValue::Stereo(r, l) => stereo_value(self.params.volume.value() * r,
-                                         self.params.volume.value() * l)
+            SampleValue::Stereo(r, l) => {
+                stereo_value(
+                    self.params.volume.value() * r,
+                    self.params.volume.value() * l,
+                )
+            }
         }
     }
 }

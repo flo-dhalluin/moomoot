@@ -45,11 +45,7 @@ impl MMTree {
     }
 
     // takes a Box, as Synth is a trait.
-    pub fn add_synth(
-        &mut self,
-        mixer_id: &str,
-        mut synth: Box<Synth>
-    ) -> Result<(), &str> {
+    pub fn add_synth(&mut self, mixer_id: &str, mut synth: Box<Synth>) -> Result<(), &str> {
 
         synth.as_mut().connect_parameters(&mut self.buses);
 
@@ -67,11 +63,7 @@ impl MMTree {
         )
     }
 
-    pub fn add_efx(
-        &mut self,
-        mixer_id: &str,
-        mut fx: Box<Efx>
-    ) -> Result<(), &str> {
+    pub fn add_efx(&mut self, mixer_id: &str, mut fx: Box<Efx>) -> Result<(), &str> {
 
         fx.as_mut().connect_parameters(&mut self.buses);
 

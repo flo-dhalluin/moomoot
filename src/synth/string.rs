@@ -8,7 +8,11 @@ use SoundSample;
 use params::*;
 
 
-declare_params!(KarplusStrongParams { cutoff_freq: 6000.0, base_freq: 440.0, feedback_gain: 0.999});
+declare_params!(KarplusStrongParams {
+    cutoff_freq: 6000.0,
+    base_freq: 440.0,
+    feedback_gain: 0.999
+});
 
 /// Karplus-Strong alg. for "plucked string" sound synthesis
 /// https://en.wikipedia.org/wiki/Karplus%E2%80%93Strong_string_synthesis

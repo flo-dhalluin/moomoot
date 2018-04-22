@@ -6,7 +6,10 @@ use SoundSample;
 use std::f64::consts::PI;
 
 
-declare_params!(SineParams { amplitude : 1.0, frequency : 440.0 });
+declare_params!(SineParams {
+    amplitude: 1.0,
+    frequency: 440.0
+});
 
 /// Pure sine synth.
 pub struct Sine {

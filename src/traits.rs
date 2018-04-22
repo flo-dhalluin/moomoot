@@ -37,26 +37,24 @@ impl Add for SampleValue {
 impl AddAssign for SampleValue {
     fn add_assign(&mut self, other: SampleValue) {
         match other {
-            SampleValue::Mono( mono ) => {
+            SampleValue::Mono(mono) => {
                 match *self {
                     SampleValue::Mono(ref mut y) => *y += mono,
                     SampleValue::Stereo(ref mut l, ref mut r) => {
                         *l += mono;
                         *r += mono;
-                    },
+                    }
                 }
-            },
-            SampleValue::Stereo( left, right) => {
+            }
+            SampleValue::Stereo(left, right) => {
                 match *self {
                     SampleValue::Mono(mono) => {
-                        *self = SampleValue::Stereo(left + mono,
-                        right + mono);
-                    },
-                    SampleValue::Stereo(ref mut sleft,
-                        ref mut sright) => {
+                        *self = SampleValue::Stereo(left + mono, right + mono);
+                    }
+                    SampleValue::Stereo(ref mut sleft, ref mut sright) => {
                         *sleft += left;
                         *sright += right;
-                    },
+                    }
                 }
             }
         }
@@ -97,14 +95,15 @@ impl Add for SoundSample {
 
 // when you don't feel like consuming
 impl AddAssign for SoundSample {
-
     fn add_assign(&mut self, other: SoundSample) {
         if let SoundSample::Sample(x) = other {
             match self {
                 SoundSample::Sample(ref mut sx) => {
                     *sx += x;
-                },
-                _ => { *self = SoundSample::Sample(x); },
+                }
+                _ => {
+                    *self = SoundSample::Sample(x);
+                }
             }
         }
     }
@@ -152,7 +151,10 @@ mod tests {
         let stereo = stereo_value(0.2, 0.3);
         let silence = SoundSample::Silence;
 
-        assert_eq!(SoundSample::Sample(SampleValue::Stereo(0.7, 0.8)), mono + stereo + silence);
+        assert_eq!(
+            SoundSample::Sample(SampleValue::Stereo(0.7, 0.8)),
+            mono + stereo + silence
+        );
 
     }
 

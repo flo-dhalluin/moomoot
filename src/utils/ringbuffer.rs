@@ -45,15 +45,15 @@ mod tests {
     #[test]
     fn test_ringbuffer() {
 
-        let mut ring = FixedRingBuffer::from( vec![0.0; 10]);
+        let mut ring = FixedRingBuffer::from(vec![0.0; 10]);
 
         for i in 1..100 {
             let mut value = i as f64;
             ring.queue(&mut value);
-            if( i < 10) {
+            if i < 10 {
                 assert_eq!(value, 0.0);
             } else {
-                assert_eq!(value, (i as f64) - 10.0 );
+                assert_eq!(value, (i as f64) - 10.0);
             }
 
         }

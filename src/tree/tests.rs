@@ -29,13 +29,12 @@ struct CstSynth {
 }
 
 impl CstSynth {
-    fn new(v: f64) -> CstSynth{
-        CstSynth{value: v}
+    fn new(v: f64) -> CstSynth {
+        CstSynth { value: v }
     }
 }
 
 impl Synth for CstSynth {
-
     fn sample(&mut self) -> SoundSample {
         mono_value(self.value)
     }
@@ -60,7 +59,7 @@ fn mixer_sample() {
 fn mixer_efx() {
     let mut mixer = mixer::Mixer::new("test");
     mixer.add_synth(Box::new(CstSynth::new(1.0)));
-    let mut v = Box::new(Volume::new(VolumeParams::default().volume(0.6)));
+    let v = Box::new(Volume::new(VolumeParams::default().volume(0.6)));
     mixer.add_efx(v);
 
     assert_eq!(mixer.sample(), mono_value(0.6));
@@ -83,7 +82,7 @@ fn mixer_cascade() {
 
     t.add_efx(
         "mixer2",
-        Box::new(Volume::new(VolumeParams::default().volume(0.5)))
+        Box::new(Volume::new(VolumeParams::default().volume(0.5))),
     ).unwrap(); // 0.5
     assert_eq!(t.sample(), mono_value(0.25));
 }
@@ -105,7 +104,6 @@ impl ShittyEnvelope {
 }
 
 impl Efx for ShittyEnvelope {
-
     fn sample(&mut self, sample: SampleValue) -> SoundSample {
         if self.tic < self.nb_samples {
             self.tic += 1;
@@ -125,15 +123,11 @@ fn transient_mixers() {
 
     let transient_mixer_id = tree.add_transient_mixer("root").unwrap();
 
-    tree.add_synth(
-        &transient_mixer_id,
-        Box::new(CstSynth::new(0.42))
-    ).unwrap();
+    tree.add_synth(&transient_mixer_id, Box::new(CstSynth::new(0.42)))
+        .unwrap();
 
-    tree.add_efx(
-        &transient_mixer_id,
-        Box::new(ShittyEnvelope::new())
-    ).unwrap();
+    tree.add_efx(&transient_mixer_id, Box::new(ShittyEnvelope::new()))
+        .unwrap();
 
     tree.add_mixer("root", "not_transient").unwrap();
 
@@ -147,7 +141,7 @@ fn transient_mixers() {
 }
 
 
-declare_params!(CstSynthParams {value: 1.});
+declare_params!(CstSynthParams { value: 1. });
 
 struct CstSynthWithP {
     params: CstSynthParams,
@@ -155,7 +149,7 @@ struct CstSynthWithP {
 
 impl CstSynthWithP {
     fn new(params: CstSynthParams) -> CstSynthWithP {
-        CstSynthWithP{params: params}
+        CstSynthWithP { params: params }
     }
 }
 
@@ -174,19 +168,26 @@ impl Synth for CstSynthWithP {
 #[test]
 fn synth_with_params() {
     let mut tree = mmtree::MMTree::new();
-    tree.add_synth("root", Box::new(CstSynthWithP::new(CstSynthParams::default()))).unwrap();
+    tree.add_synth(
+        "root",
+        Box::new(CstSynthWithP::new(CstSynthParams::default())),
+    ).unwrap();
 
     assert_eq!(tree.sample(), mono_value(1.));
 
     tree.add_synth(
         "root",
-        Box::new(CstSynthWithP::new(CstSynthParams::default().value(0.44)))).unwrap();
+        Box::new(CstSynthWithP::new(CstSynthParams::default().value(0.44))),
+    ).unwrap();
 
     assert_eq!(tree.sample(), mono_value(1.44));
 
     tree.add_synth(
         "root",
-        Box::new(CstSynthWithP::new(CstSynthParams::default().value("chombier")))).unwrap();
+        Box::new(CstSynthWithP::new(
+            CstSynthParams::default().value("chombier"),
+        )),
+    ).unwrap();
 
     tree.set_bus_value("chombier", 1.0).unwrap();
     assert_eq!(tree.sample(), mono_value(2.44));
@@ -207,17 +208,18 @@ mod benches {
         use efx::volume::{Volume, VolumeParams};
         use synth::sine::{Sine, SineParams};
 
-        const TREE_DEPTH : usize = 3;
-        const TREE_WIDTH : usize = 5;
+        const TREE_DEPTH: usize = 3;
+        const TREE_WIDTH: usize = 5;
 
         let mut tree = mmtree::MMTree::new();
 
-        tree.add_synth("root", Box::new(Sine::new(SineParams::default()))).unwrap();
+        tree.add_synth("root", Box::new(Sine::new(SineParams::default())))
+            .unwrap();
 
         let mut stack = Vec::new();
         stack.push((String::from("root"), 0));
 
-        while ! stack.is_empty() {
+        while !stack.is_empty() {
 
             let (parent_id, level) = stack.pop().unwrap();
 
@@ -229,8 +231,8 @@ mod benches {
                     stack.push((new_id, level + 1));
                 }
             }
-            for j in 0..2 {
-                let synth = Box::new(Sine::new(SineParams::default().frequency( "f" )));
+            for _ in 0..2 {
+                let synth = Box::new(Sine::new(SineParams::default().frequency("f")));
                 tree.add_synth(&parent_id, synth).unwrap();
             }
 

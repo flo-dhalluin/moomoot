@@ -62,9 +62,10 @@ impl Mixer {
         if id == self.id {
             Some(self)
         } else {
-            self.sub_mixers.iter_mut()
-            .filter_map( |m| m.find_mixer(id))
-            .next()
+            self.sub_mixers
+                .iter_mut()
+                .filter_map(|m| m.find_mixer(id))
+                .next()
         }
     }
 }
@@ -92,22 +93,23 @@ fn sample_and_remove<S: AsSynth>(synths: &mut LinkedList<S>) -> SoundSample {
 
     let mut res = SoundSample::Silence;
 
-    synths.drain_filter( | s | {
+    synths.drain_filter(|s| {
         let sample = s.sample();
         match sample {
             SoundSample::Done => true,
-            _ => { res += sample; false },
+            _ => {
+                res += sample;
+                false
+            }
         }
     });
     res
 }
 
 impl Mixer {
-
     pub fn sample(&mut self) -> SoundSample {
 
-        let res = sample_and_remove(&mut self.synths)
-        + sample_and_remove(&mut self.sub_mixers);
+        let res = sample_and_remove(&mut self.synths) + sample_and_remove(&mut self.sub_mixers);
 
         if let SoundSample::Sample(value) = res {
             let mut sample = value;

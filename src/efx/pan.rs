@@ -3,7 +3,7 @@ use params::*;
 use super::Efx;
 
 // 0. => all right 1. => all left
-declare_params!(PanParams {pan: 0.5});
+declare_params!(PanParams { pan: 0.5 });
 
 pub struct Pan {
     params: PanParams,
@@ -16,14 +16,12 @@ impl Parametrized for Pan {
 }
 
 impl Pan {
-    pub fn new(params : PanParams) -> Pan {
-        Pan{params: params}
+    pub fn new(params: PanParams) -> Pan {
+        Pan { params: params }
     }
 }
 
 impl Efx for Pan {
-
-
     fn sample(&mut self, sample: SampleValue) -> SoundSample {
 
         let right_v = self.params.pan.value();
@@ -31,8 +29,7 @@ impl Efx for Pan {
 
         match sample {
             SampleValue::Mono(x) => stereo_value(x * right_v, x * left_v),
-            SampleValue::Stereo(r, l) => stereo_value(right_v * r,
-                                                      left_v * l) // ??
+            SampleValue::Stereo(r, l) => stereo_value(right_v * r, left_v * l), // ??
         }
     }
 }

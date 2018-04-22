@@ -2,14 +2,18 @@ use super::sender::{Sender, Reader, link};
 
 pub struct Bus<T> {
     senders: Vec<Sender<T>>,
-    initial_value: T
+    initial_value: T,
 }
 
 impl<T> Bus<T>
-    where T:Copy,
+where
+    T: Copy,
 {
-    pub fn new(initial_value:T) -> Bus<T> {
-        Bus { senders: Vec::new(), initial_value: initial_value}
+    pub fn new(initial_value: T) -> Bus<T> {
+        Bus {
+            senders: Vec::new(),
+            initial_value: initial_value,
+        }
     }
 
     pub fn subscribe(&mut self) -> Reader<T> {
@@ -20,9 +24,7 @@ impl<T> Bus<T>
 
     pub fn publish(&mut self, value: T) {
         self.initial_value = value;
-        self.senders.retain(
-            |sender| sender.send(value).is_ok()
-        )
+        self.senders.retain(|sender| sender.send(value).is_ok())
     }
 
     pub fn sub_count(&self) -> usize {
@@ -49,7 +51,7 @@ mod tests {
             assert_eq!(1.0, r2.value());
             assert_eq!(2, bus.sub_count());
         }
-        
+
         bus.publish(2.); // need to propagate a value to update subcount
         assert_eq!(1, bus.sub_count());
     }
