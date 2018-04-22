@@ -83,8 +83,8 @@ mod tests {
             b: bus.sub("b"),
         };
 
-        bus.publish("a", 2.0);
-        bus.publish("b", 4.0);
+        bus.publish("a", 2.0).unwrap();
+        bus.publish("b", 4.0).unwrap();
 
         assert_eq!(stuff.doit(), 6.0);
 

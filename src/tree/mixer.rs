@@ -1,18 +1,19 @@
 use synth::Synth;
 use efx::Efx;
 use traits::SoundSample;
-use std;
-
+use std::collections::LinkedList;
 type MixerId = String;
 
-// combinators
+// These are actually owning tree nodes.
+// child lists are based on LinkedList because :
+// - we don't need individual access ( traversal only )
+// - we do need predictable node removal in the middle
+// - we need actual O(1) append ( Real time remember ?? )
 pub struct Mixer {
     is_transient: bool,
-    synths: Vec<Box<Synth>>,
-    pub sub_mixers: Vec<Box<Mixer>>,
-
+    synths: LinkedList<Box<Synth>>,
+    pub sub_mixers: LinkedList<Box<Mixer>>,
     effects: Vec<Box<Efx>>,
-
     pub id: MixerId,
 }
 
@@ -20,9 +21,9 @@ impl Mixer {
     pub fn new(id: &str) -> Mixer {
         Mixer {
             is_transient: false,
-            synths: Vec::new(),
+            synths: LinkedList::new(),
             effects: Vec::new(),
-            sub_mixers: Vec::new(),
+            sub_mixers: LinkedList::new(),
             id: String::from(id),
         }
     }
@@ -34,7 +35,7 @@ impl Mixer {
     }
 
     pub fn add_synth(&mut self, s: Box<Synth>) {
-        self.synths.push(s);
+        self.synths.push_back(s);
     }
 
     pub fn add_efx(&mut self, efx: Box<Efx>) {
@@ -42,7 +43,7 @@ impl Mixer {
     }
 
     pub fn add_sub_mixer(&mut self, mixer: Mixer) {
-        self.sub_mixers.push(Box::new(mixer));
+        self.sub_mixers.push_back(Box::new(mixer));
     }
 
     pub fn mixer_count(&self) -> usize {
@@ -61,9 +62,9 @@ impl Mixer {
         if id == self.id {
             Some(self)
         } else {
-            self.sub_mixers.iter_mut().find(|m| m.id == id).map(|bxd| {
-                bxd.as_mut()
-            })
+            self.sub_mixers.iter_mut()
+            .filter_map( |m| m.find_mixer(id))
+            .next()
         }
     }
 }
@@ -87,28 +88,26 @@ impl AsSynth for Box<Mixer> {
 }
 
 // UGLY : see also drain_filter in nightly
-fn sample_and_remove<S: AsSynth>(synths: &mut Vec<S>) -> SoundSample {
-    let (samples, alive_synths): (Vec<_>, Vec<_>) = std::mem::replace(synths, Vec::new())
-        .into_iter()
-        .filter_map(|mut s| {
-            let sample = s.sample();
-            match sample {
-                SoundSample::Done => None, // pop "Done" synths
-                _ => Some((sample, s)),
-            }
-        })
-        .unzip();
+fn sample_and_remove<S: AsSynth>(synths: &mut LinkedList<S>) -> SoundSample {
 
-    std::mem::replace(synths, alive_synths);
-    samples.into_iter().sum()
+    let mut res = SoundSample::Silence;
+
+    synths.drain_filter( | s | {
+        let sample = s.sample();
+        match sample {
+            SoundSample::Done => true,
+            _ => { res += sample; false },
+        }
+    });
+    res
 }
-
 
 impl Mixer {
 
     pub fn sample(&mut self) -> SoundSample {
 
-        let res = sample_and_remove(&mut self.synths) + sample_and_remove(&mut self.sub_mixers);
+        let res = sample_and_remove(&mut self.synths)
+        + sample_and_remove(&mut self.sub_mixers);
 
         if let SoundSample::Sample(value) = res {
             let mut sample = value;

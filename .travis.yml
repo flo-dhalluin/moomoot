@@ -1,11 +1,8 @@
 language: rust
 rust:
-  - stable
-  - beta
+#  - stable
+#  - beta
   - nightly
-matrix:
-  allow_failures:
-    - rust: nightly
 before_script:
   - jackd -r -d dummy &
 addons:
