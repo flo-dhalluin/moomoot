@@ -24,9 +24,12 @@ limitations under the License.
 
 extern crate uuid;
 extern crate jack;
+#[macro_use]
+extern crate nom;
 
 mod base;
 mod traits;
+pub mod param_expression;
 #[macro_use]
 mod params;
 pub mod synth;

@@ -10,6 +10,7 @@ repository = "https://github.com/flo-dhalluin/moomoot"
 jack = "0.5.0"
 libc = "0.2.0"
 rand = "0.3"
+nom = "3.2.1"
 # rosc = "~0.1"
 # matches="0.1"
 uuid = {version = "0.4", features = ["v4"]}

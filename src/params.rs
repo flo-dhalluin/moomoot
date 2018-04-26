@@ -1,4 +1,6 @@
+
 use tree::pbus;
+use param_expression::CalcParam;
 use std::fmt;
 use std::cmp;
 
@@ -21,13 +23,41 @@ pub enum BusParam {
     Connected(pbus::Reader<f64>),
 }
 
+impl BusParam {
+
+    pub fn value(&self) -> f64 {
+        if let BusParam::Connected(ref rcvr) = *self {
+            rcvr.value()
+        } else {
+            panic!("un-connected bus");
+        }
+    }
+
+    pub fn connect_to_bus(&mut self, buses: &mut pbus::BusSystem) {
+        let recvr = {
+            if let BusParam::NotConnected(ref busid) = *self {
+                Some(buses.sub(&busid))
+            } else {
+                None
+            }
+        };
+
+        if recvr.is_some() {
+            *self = BusParam::Connected(recvr.unwrap());
+        }
+    }
+}
+
+
 /// Parameters from the client side.
-#[derive(Debug, PartialEq)]
+// #[derive(Debug, PartialEq)]
 pub enum ParamValue {
     /// a constant value
     Constant(f64),
     /// an internal bus id (for adjustable parameters)
     BusValue(BusParam),
+    /// formula from constant and bus values
+    Formula(Box<CalcParam>),
     /// using the Synth's default value.
     Default(f64),
 }
@@ -38,16 +68,12 @@ impl ParamValue {
     }
 
     fn connect(&mut self, buses: &mut pbus::BusSystem) {
-        let recvr = {
-            if let ParamValue::BusValue(BusParam::NotConnected(ref busid)) = *self {
-                Some(buses.sub(&busid))
-            } else {
-                None
-            }
-        };
 
-        if recvr.is_some() {
-            *self = ParamValue::BusValue(BusParam::Connected(recvr.unwrap()));
+        // sounds like a code smell..
+        match *self {
+            ParamValue::BusValue(ref mut bus_param) => bus_param.connect(buses),
+            ParamValue::Formula(ref mut calc_val) => calc_val.connect(buses),
+            _ => {},
         }
     }
 
@@ -55,13 +81,9 @@ impl ParamValue {
         match *self {
             ParamValue::Constant(ref x) => *x,
             ParamValue::Default(ref x) => *x,
-            ParamValue::BusValue(ref x) => {
-                if let BusParam::Connected(ref rcvr) = *x {
-                    rcvr.value()
-                } else {
-                    panic!("un-connected bus");
-                }
-            }
+            // see the pattern ?
+            ParamValue::BusValue(ref x) => x.value(),
+            ParamValue::Formula(ref x) => x.calc(),
         }
     }
 }
@@ -75,6 +97,12 @@ impl From<f64> for ParamValue {
 impl<'a> From<&'a str> for ParamValue {
     fn from(bus: &'a str) -> ParamValue {
         ParamValue::BusValue(BusParam::NotConnected(bus.to_string()))
+    }
+}
+
+impl From<Box<CalcParam>> for ParamValue {
+    fn from(c: Box<CalcParam>) -> ParamValue {
+        ParamValue::Formula(c)
     }
 }
 
@@ -94,7 +122,7 @@ impl Parameters for NoParameters {
 macro_rules! declare_params {
     ($name:ident {$($p:ident : $v:expr),*}) => {
 
-    #[derive(Debug)]
+    //#[derive(Debug)]
     pub struct $name {
         $(
             $p : ParamValue,
@@ -152,6 +180,7 @@ pub trait Parametrized {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use param_expression::parse_param_expression;
 
     declare_params!(SomeParams { a: 42.0, b: 77.0 });
 
@@ -175,9 +204,8 @@ mod tests {
 
         let p = SomeParams::default().b(5.0);
 
-        assert_eq!(p.a, ParamValue::Default(42.0));
-        assert_eq!(p.b, ParamValue::Constant(5.0));
-
+        assert_eq!(42.0, p.a.value());
+        assert_eq!(5.0, p.b.value());
     }
 
     #[test]
@@ -197,4 +225,18 @@ mod tests {
     }
 
 
+    #[test]
+    fn test_param_with_calc() {
+        let mut c = Chombier(SomeParams::default()
+        .a(parse_param_expression("4.0 * x + 2.0").unwrap()));
+
+        let mut bus = pbus::BusSystem::new();
+        c.connect_parameters(&mut bus);
+        bus.publish("x", 2.).unwrap();
+        assert_eq!(c.tic(), 77.0 + 10.0);
+
+        bus.publish("x", 3.).unwrap();
+        assert_eq!(c.tic(), 77.0 + 14.0);
+
+    }
 }
