@@ -7,7 +7,7 @@ use params::BusParam;
 /// simple calculator like expressions for param
 /// allow to write simple equations with "bus" params
 
-pub trait CalcParam : Send {
+pub trait CalcParam: Send {
     fn calc(&self) -> f64;
     fn connect(&mut self, buses: &mut pbus::BusSystem) {}
 }
@@ -29,8 +29,8 @@ struct CalcNode {
 impl CalcParam for CalcNode {
     fn calc(&self) -> f64 {
         match &self.op {
-            CalcBinOp::Add =>  self.left.calc()  + self.right.calc(),
-            CalcBinOp::Sub => self.left.calc()  - self.right.calc(),
+            CalcBinOp::Add => self.left.calc() + self.right.calc(),
+            CalcBinOp::Sub => self.left.calc() - self.right.calc(),
             CalcBinOp::Mult => self.left.calc() * self.right.calc(),
         }
     }
@@ -44,7 +44,7 @@ impl CalcParam for CalcNode {
 
 /// a literal constant
 struct CalcCst {
-    val : f64
+    val: f64,
 }
 
 impl CalcParam for CalcCst {
@@ -66,11 +66,11 @@ impl CalcParam for BusParam {
 // parsing shit. largely inspired from the simple calculator nom example
 
 fn parse_constant(value: f64) -> Box<CalcParam> {
-    Box::new( CalcCst{ val: value } )
+    Box::new(CalcCst { val: value })
 }
 
 fn parse_bus_param(name: &str) -> Box<CalcParam> {
-    Box::new( BusParam::NotConnected(name.to_string()))
+    Box::new(BusParam::NotConnected(name.to_string()))
 }
 
 // terminals
@@ -96,13 +96,23 @@ named!(expression_p<&str, Box<CalcParam> >, do_parse!(
 ));
 
 fn parse_exp(left: Box<CalcParam>, rem: Vec<(char, Box<CalcParam>)>) -> Box<CalcParam> {
-    rem.into_iter().fold(left, |acc, (op, expr)| {
-        match op {
-            '*' => Box::new(CalcNode{left: acc, right: expr, op: CalcBinOp::Mult}),
-            '-' => Box::new(CalcNode{left: acc, right: expr, op: CalcBinOp::Sub}),
-            '+' => Box::new(CalcNode{left: acc, right: expr, op: CalcBinOp::Add}),
-            _ => panic!(format!("unknown operation : {}", op)),
-        }
+    rem.into_iter().fold(left, |acc, (op, expr)| match op {
+        '*' => Box::new(CalcNode {
+            left: acc,
+            right: expr,
+            op: CalcBinOp::Mult,
+        }),
+        '-' => Box::new(CalcNode {
+            left: acc,
+            right: expr,
+            op: CalcBinOp::Sub,
+        }),
+        '+' => Box::new(CalcNode {
+            left: acc,
+            right: expr,
+            op: CalcBinOp::Add,
+        }),
+        _ => panic!(format!("unknown operation : {}", op)),
     })
 }
 

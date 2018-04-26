@@ -11,7 +11,7 @@ use params::*;
 declare_params!(KarplusStrongParams {
     cutoff_freq: 6000.0,
     base_freq: 440.0,
-    feedback_gain: 0.999
+    feedback_gain: 0.999,
 });
 
 /// Karplus-Strong alg. for "plucked string" sound synthesis

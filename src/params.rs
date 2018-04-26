@@ -24,7 +24,6 @@ pub enum BusParam {
 }
 
 impl BusParam {
-
     pub fn value(&self) -> f64 {
         if let BusParam::Connected(ref rcvr) = *self {
             rcvr.value()
@@ -73,7 +72,7 @@ impl ParamValue {
         match *self {
             ParamValue::BusValue(ref mut bus_param) => bus_param.connect(buses),
             ParamValue::Formula(ref mut calc_val) => calc_val.connect(buses),
-            _ => {},
+            _ => {}
         }
     }
 
@@ -160,7 +159,11 @@ macro_rules! declare_params {
             }
         )*
     }
-}}
+};
+    ($name:ident {$($p:ident : $v:expr,)*}) => {
+        declare_params!($name { $($p : $v),* });
+    };
+}
 
 static mut NO_PARAMETERS: NoParameters = NoParameters {};
 
@@ -227,8 +230,9 @@ mod tests {
 
     #[test]
     fn test_param_with_calc() {
-        let mut c = Chombier(SomeParams::default()
-        .a(parse_param_expression("4.0 * x + 2.0").unwrap()));
+        let mut c = Chombier(SomeParams::default().a(
+            parse_param_expression("4.0 * x + 2.0").unwrap(),
+        ));
 
         let mut bus = pbus::BusSystem::new();
         c.connect_parameters(&mut bus);
